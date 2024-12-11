@@ -1,0 +1,15 @@
+[app_settings]
+app_port = 8001
+app_host = "127.0.0.2"
+app_version = "1.0.0"
+app_name = "NeoBitCloud_simple_file_storage"
+#префикс для всех маршрутов приложения:
+app_mount = "/api/v1"
+
+
+[db_settings]
+db_name = "postgres"
+db_user ="myuser"
+db_password = "mypassword"
+db_host = "localhost"
+db_port = 5432
