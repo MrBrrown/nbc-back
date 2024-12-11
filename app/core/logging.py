@@ -1,2 +1,5 @@
 def configure_logger():
-    return None
+    pass
+
+def get_logger():
+    pass
