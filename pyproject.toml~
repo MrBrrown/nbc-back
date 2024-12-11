@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "app"
+version = "1.0.0"
+description = "This is S3-like storage"
+authors = ["Алексей Сидоров, Анна Федутинова, Артем Гусев, Жуков Владислав, Новикова Наталья"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.13"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
