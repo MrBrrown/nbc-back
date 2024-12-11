@@ -1,2 +1,3 @@
-def bucket_router():
-    return None
+from fastapi import APIRouter
+
+bucket_router = APIRouter()

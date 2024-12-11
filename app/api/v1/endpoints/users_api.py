@@ -1,2 +1,3 @@
-def user_router():
-    return None
+from fastapi import APIRouter
+
+user_router = APIRouter()

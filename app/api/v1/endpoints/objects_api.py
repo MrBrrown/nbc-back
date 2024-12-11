@@ -1,2 +1,4 @@
-def object_router():
-    return None
+from fastapi import APIRouter
+
+object_router = APIRouter()
+

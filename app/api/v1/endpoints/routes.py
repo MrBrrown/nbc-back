@@ -5,7 +5,7 @@ from app.api.v1.endpoints.misc_api import misc_router
 
 ROUTES = {
     "": misc_router,
-    "buckets/{bucket_name}": object_router,
-    "buckets": bucket_router,
-    "users": user_router
+    "/buckets/{bucket_name}": object_router,
+    "/buckets": bucket_router,
+    "/users": user_router
 }
