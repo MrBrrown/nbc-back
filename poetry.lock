@@ -490,9 +490,9 @@ files = [
 ]
 
 [[package]]
-name = "packaging"
-version = "24.2"
-description = "Core utilities for Python packages"
+name = "propcache"
+version = "0.2.1"
+description = "Accelerated property cache"
 optional = false
 python-versions = ">=3.8"
 files = [
