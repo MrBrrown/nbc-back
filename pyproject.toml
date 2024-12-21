@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "app"
+version = "1.0.0"
+description = "This is S3-like storage"
+authors = ["Алексей Сидоров, Анна Федутинова, Артем Гусев, Жуков Владислав, Новикова Наталья"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.13.1"
+fastapi = "^0.115.4"
+alembic = "^1.14.0"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.36"}
+ruff = "^0.7.3"
+mypy = "^1.13.0"
+dynaconf = "^3.2.6"
+asyncpg = "^0.30.0"
+uvicorn = "^0.32.0"
+typer = "^0.13.0"
+structlog = "^24.4.0"
+greenlet = "^3.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "--cov=app --cov-report=term-missing --cov-report=html"
