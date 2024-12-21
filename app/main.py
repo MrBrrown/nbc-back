@@ -1,16 +1,13 @@
 import uvicorn
 from fastapi import FastAPI
 
-from core.logging import configure_logger
-from core.config import settings
-from app import get_app
+from app.core.config import settings
+from app.app import get_app
 
 
 
 def run_api_app() -> None:
     print("Configuring logger...")
-    configure_logger()
-    print("Logger configured")
 
     print("Creating FastAPI app...")
     app = FastAPI(docs_url="/docs", openapi_url="/openapi.json", redoc_url="/redoc")

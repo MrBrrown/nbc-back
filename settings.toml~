@@ -2,7 +2,7 @@
 app_port = 8001
 app_host = "127.0.0.2"
 app_version = "1.0.0"
-app_name = "NeoBitCloud_simple_file_storage"
+app_name = "nbc-back"
 app_mount = "/api/v1"
 
 

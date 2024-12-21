@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+SQLAlchemy
+alembic
+psycopg2-binary
+pydantic
+loguru
+python-multipart
+prometheus-client
+passlib[bcrypt]
+jose

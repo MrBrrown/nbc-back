@@ -16,9 +16,9 @@ class DBConfig(BaseModel):
 
 class APPConfig(BaseModel):
     app_port: int
-    app_host: str
     app_version: str
     app_name: str
+    app_host: str
     app_mount: str
 
 
@@ -32,4 +32,3 @@ dyna_settings = Dynaconf(
 )
 
 settings = Settings(app=dyna_settings["app_settings"], db=dyna_settings["db_settings"])
-# print(settings.app.app_port)
