@@ -1,21 +1,20 @@
-#TODO Доделать. Пока драфт makefile
+.PHONY: setup format types migration start build up down test deploy install
 
 format:
-    @echo "formatting..."
-    poetry run ruff format app
+	@echo "formatting..."
+	poetry run ruff format app
 
 types:
-    @echo "checking types..."
-    poetry run mypy app
+	@echo "checking types..."
+	poetry run mypy app
 
 migration:
-    @echo "running migrations..."
-    alembic revision --autogenerate -m "initial migration
-"
+	@echo "running migrations..."
+	alembic revision --autogenerate -m "initial migration"
 
 start:
-    @echo "starting app..."
-    poetry run python cli.py api
+	@echo "starting app..."
+	poetry run python app/main.py
 
 build:
 	docker-compose build
@@ -30,4 +29,19 @@ test:
 	docker-compose run api pytest
 
 deploy:
-    # Команды для деплоя
+	# Команды для деплоя
+
+install:
+	@echo "installing dependencies..."
+	pip install poetry
+	poetry lock
+	poetry install
+
+setup: install start
+
+install:
+	@echo "Setting up the application..."
+	docker-compose up -d
+	@echo "Installing dependencies..."
+	poetry lock
+	poetry install
