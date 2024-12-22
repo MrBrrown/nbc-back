@@ -12,6 +12,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.timezone.utc)
+    is_active = Column(Boolean, default=True)
 
     files = relationship("File", back_populates="owner")
 

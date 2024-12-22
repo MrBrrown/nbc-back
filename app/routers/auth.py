@@ -12,7 +12,7 @@ ALGORITHM = "HS256"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(db_url)):
+async def get_current_user(token: str = Depends(oauth2_scheme), user_repo: UserRepository = Depends()):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -26,7 +26,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         token_data = schemas.TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = crud.get_user_by_username(db, username=token_data.username)
-    if user is None:
+    user = await user_repo.get_user_by_username(token_data.username)
+    if not user or not user.is_active:
         raise credentials_exception
     return user

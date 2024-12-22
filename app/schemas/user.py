@@ -7,6 +7,11 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=6)
     email: EmailStr
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+
 class User(BaseModel):
     id: int
     username: str

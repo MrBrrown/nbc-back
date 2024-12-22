@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.v1.endpoints.routes import api_router
+from api.v1.endpoints.routes import api_router
 
 #
 # def setup_routes(app: FastAPI) -> None:

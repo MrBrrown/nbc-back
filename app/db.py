@@ -5,8 +5,10 @@ from typing import List
 from alembic import command
 from alembic.config import Config as AlembicConfig
 from sqlalchemy import NullPool, select
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, AsyncSession, \
-    async_scoped_session
+#from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, AsyncSession, \
+#    async_scoped_session
+
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, AsyncSession, async_scoped_session
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
@@ -15,13 +17,15 @@ from api.v1.endpoints.objects_api import root_dir
 from core.config import settings
 from models.bucket import Bucket
 from models.object import Object
-from models.users_model import User
+#from models.users_model import User
+
+from app.repositories.user_repository import UserRepository
 
 db_url = settings.db.db_url
 # подключение к базе
 engine = create_async_engine(url=db_url, echo=True, poolclass=NullPool)
 
-async_session_maker = async_sessionmaker(
+async_session_maker = sessionmaker(
     bind=engine, class_=AsyncSession, expire_on_commit=True
 )
 
@@ -273,3 +277,10 @@ async def delete_user(self, username: str):
             except Exception as e:
                 await session.rollback()
                 print(f"Error deleting user: {e}")
+
+async def get_db() -> Generator[AsyncSession, None, None]:
+    async with async_session_maker() as session:
+        yield session
+
+async def get_user_repository(session: AsyncSession = Depends(get_session)) -> UserRepository:
+    return UserRepository(session)

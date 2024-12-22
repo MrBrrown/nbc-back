@@ -1,12 +1,11 @@
 import uvicorn
-from fastapi import FastAPI
 
-from app.core.config import settings
-from app.app import get_app
+from core.config import settings
+from application import get_app
 
 from fastapi import FastAPI, Request
 from time import time
-from app.core.metrics import start_metrics_server, record_request_metrics
+from core.metrics import start_metrics_server, record_request_metrics
 
 app = FastAPI()
 
