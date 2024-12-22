@@ -3,7 +3,7 @@ import pathlib
 from fastapi import APIRouter, UploadFile, File
 from fastapi.params import Body
 from starlette.responses import FileResponse
-from models.user import User
+from models.users_model import User
 from models.object import Object
 from models.bucket import Bucket
 from core.config import settings
@@ -20,7 +20,7 @@ async def get_objects_metadata(bucket_name: str):
 
 def create_dirs(path):
     dir_path = pathlib.Path(path).parent
-    
+
     if not dir_path.exists():
         # Создайте все директории в пути
         dir_path.mkdir(parents=True)
