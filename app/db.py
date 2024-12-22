@@ -10,11 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
+from app.models.BaseModel import base_model
 from api.v1.endpoints.objects_api import root_dir
 from core.config import settings
 from models.bucket import Bucket
 from models.object import Object
-from models.user import User
+from models.users_model import User
 
 db_url = settings.db.db_url
 # подключение к базе
