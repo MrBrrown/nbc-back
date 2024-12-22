@@ -19,8 +19,7 @@ async def get_objects_metadata(bucket_name: str):
     pass
 
 def create_dirs(path):
-    dir_path = pathlib.Path(path).parent
-    
+    dir_path = pathlib.Path(path).expanduser().parent
     if not dir_path.exists():
         # Создайте все директории в пути
         dir_path.mkdir(parents=True)
@@ -29,7 +28,7 @@ def create_dirs(path):
 async def upload_object (bucket_name: str, object_key: str, file: UploadFile = File(...)):
     full_uploaded_filename_with_extension = file.filename
     extension_without_dot = full_uploaded_filename_with_extension.split(".")[1]
-    path = os.path.join(root_dir,bucket_name, f'{object_key}.{extension_without_dot}')
+    path = pathlib.Path(os.path.join(root_dir, bucket_name, f'{object_key}.{extension_without_dot}')).expanduser()
     create_dirs(path)
     with open(path, "wb") as f:
         f.write(await file.read())

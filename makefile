@@ -37,6 +37,6 @@ install:
 	poetry lock
 	poetry install
 	@echo "Setting up the application..."
-	docker-compose up -d
+	docker-compose -f "docker/docker-compose.yml" up --build
 
 setup: install start

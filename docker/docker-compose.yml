@@ -10,16 +10,16 @@ services:
     ports:
       - "5432:5432"
 
-  web:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    volumes:
-      - ../app:/app/app
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
+#  web:
+#    build:
+#      context: ..
+#      dockerfile: docker/Dockerfile
+#    volumes:
+#      - ../app:/app/app
+#    ports:
+#      - "8000:8000"
+#    depends_on:
+#      - db
 
   prometheus:
     image: prom/prometheus
