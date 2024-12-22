@@ -36,12 +36,7 @@ install:
 	pip install poetry
 	poetry lock
 	poetry install
-
-setup: install start
-
-install:
 	@echo "Setting up the application..."
 	docker-compose up -d
-	@echo "Installing dependencies..."
-	poetry lock
-	poetry install
+
+setup: install start
