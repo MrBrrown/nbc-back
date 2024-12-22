@@ -1,37 +1,45 @@
 #TODO Create repositories instead one db.py
 import asyncio
+import os
+import sys
 from datetime import datetime
-from typing import List
+from pathlib import Path
+
 from alembic import command
 from alembic.config import Config as AlembicConfig
-from sqlalchemy import NullPool, select
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, AsyncSession, \
-    async_scoped_session
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import NullPool
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.future import select
+
 from api.v1.endpoints.objects_api import root_dir
-from core.config import settings
+from core.config import settings, get_alembic_cfg_path, get_project_root
 from models.bucket import Bucket
 from models.object import Object
 from models.user import User
+from schemas.bucket_schema import BucketSchema
 
 db_url = settings.db.db_url
 # подключение к базе
 engine = create_async_engine(url=db_url, echo=True, poolclass=NullPool)
-async_session_factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+async_session_factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=True)
 
 async def init_alembic():
+    # Сохраняем текущую рабочую директорию
+    current_working_directory = Path.cwd()
     # Путь к файлу alembic.ini
-    alembic_cfg_path = 'alembic.ini'
+    alembic_cfg_path = get_alembic_cfg_path()
     try:
+        os.chdir(get_project_root())
         # Выполнение миграций
         alembic_cfg = AlembicConfig(alembic_cfg_path)
         await asyncio.to_thread(command.upgrade,alembic_cfg, "head")
     except Exception as e:
         print(f"Error applying Alembic migrations: {e}")
+    finally:
+        # Восстановить текущую рабочую директорию
+        os.chdir(current_working_directory)
 
-async def create_bucket(bucket_name: str) -> Bucket:
+async def create_bucket(bucket_name: str):
     async with async_session_factory() as session:
         async with session.begin():
             try:
@@ -41,15 +49,13 @@ async def create_bucket(bucket_name: str) -> Bucket:
                     created_at=datetime.now()
                 )
                 session.add(new_bucket)
+                await session.flush()
+                bucket_schema = BucketSchema.model_validate(new_bucket)
                 await session.commit()
-                return new_bucket
+                return bucket_schema
             except Exception as e:
                 await session.rollback()
                 print(f"Error creating bucket: {e}")
-
-
-
-
 
 async def delete_bucket (bucket_name: str):
     async with async_session_factory() as session:
@@ -83,7 +89,8 @@ async def get_all_buckets():
             try:
                 result = await session.execute(select(Bucket))
                 buckets = result.scalars().all()
-                return buckets
+                bucket_schemas = [BucketSchema.model_validate(bucket) for bucket in buckets]
+                return bucket_schemas
             except Exception as e:
                 await session.rollback()
                 print(f"Error creating bucket: {e}")

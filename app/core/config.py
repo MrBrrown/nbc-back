@@ -1,5 +1,8 @@
+import os
+
 from dynaconf import Dynaconf
 from pydantic import BaseModel
+from pathlib import Path
 
 class DBConfig(BaseModel):
     db_name: str
@@ -32,4 +35,10 @@ dyna_settings = Dynaconf(
 )
 
 settings = Settings(app=dyna_settings["app_settings"], db=dyna_settings["db_settings"], fileStorage=dyna_settings["file_storage_settings"])
-#print(settings.app.app_port)
+
+def get_project_root() -> Path:
+    return Path(__file__).resolve().parent.parent.parent
+
+def get_alembic_cfg_path() -> Path:
+    return Path(os.path.join(get_project_root(),'alembic.ini'))
+

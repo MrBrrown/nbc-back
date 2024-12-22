@@ -1,21 +1,14 @@
 import asyncio
 import os
 import sys
+
 import uvicorn
+from fastapi import FastAPI
+
 from application import get_app
-from alembic import command
-from fastapi import FastAPI
-from core import logging
-from core.logging import configure_logger
 from core.config import settings
-from fastapi import FastAPI
-from alembic.config import Config as AlembicConfig
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from core.logging import configure_logger
 from db import init_alembic
-from models.user import User
-
-
 
 # Add the project root to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

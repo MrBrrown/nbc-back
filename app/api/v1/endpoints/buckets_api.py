@@ -1,19 +1,17 @@
 from fastapi import APIRouter, HTTPException
 import db
-from schemas.bucket import Bucket
+from schemas.bucket_schema import BucketSchema
 from typing import List
-
 
 bucket_router = APIRouter()
 
-
 @bucket_router.get("/")
-async def get_buckets() -> List[Bucket]:
+async def get_buckets() -> List[BucketSchema]:
     buckets = await db.get_all_buckets()
     return buckets
 
 @bucket_router.put("/{bucket_name}")
-async def create_bucket(bucket_name: str) -> Bucket:
+async def create_bucket(bucket_name: str) -> BucketSchema:
     bucket = await db.create_bucket(bucket_name)
     return bucket
 

@@ -22,7 +22,11 @@ greenlet = "^3.1.1"
 python-multipart = "^0.0.20"
 aiohttp = "^3.11.11"
 psutil = "^6.1.1"
+pycryptodome = "^3.21.0"
+python-jose = "^3.3.0"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.2"
 
 [build-system]
 requires = ["poetry-core"]

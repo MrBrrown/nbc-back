@@ -8,9 +8,9 @@ app_mount = "/api/v1"
 
 
 [db_settings]
-db_name = "postgres"
-db_user ="myuser"
-db_password = "mypassword"
+db_name = "storage_db"
+db_user ="postgres"
+db_password = "postgres"
 db_host = "127.0.0.1"
 db_port = 5432
 

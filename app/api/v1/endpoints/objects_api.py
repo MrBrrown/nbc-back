@@ -19,9 +19,8 @@ async def get_objects_metadata(bucket_name: str):
     pass
 
 def create_dirs(path):
-    # Получите директорию из пути к файлу
     dir_path = pathlib.Path(path).parent
-    # Если директория не существует, создайте ее
+    
     if not dir_path.exists():
         # Создайте все директории в пути
         dir_path.mkdir(parents=True)
