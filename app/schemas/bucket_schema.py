@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
@@ -11,6 +13,7 @@ class BucketBase(BaseModel):
         pattern=r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",  # Simplified bucket name pattern
     )
     owner_id: int = Field(..., description="ID of the bucket owner")
+    owner_name: str = Field(None, description="Username of the bucket owner")
     model_config = ConfigDict(from_attributes=True, json_schema_extra={"description": "Bucket Base Model"})
 
 class BucketMetadata(BaseModel):
@@ -22,8 +25,8 @@ class BucketMetadata(BaseModel):
 
 class BucketStatistics(BaseModel):
     """Model for bucket statistics."""
-    file_count: int = Field(..., description="Number of files in the bucket")
-    size: int = Field(..., description="Total size of files in the bucket in bytes")
+    file_count: Optional[int] = Field(None, description="Number of files in the bucket")
+    size: Optional[int] = Field(None, description="Total size of files in the bucket in bytes")
     model_config = ConfigDict(from_attributes=True, json_schema_extra={"description": "Bucket Statistics Model"})
 
 class BucketCreate(BucketBase):

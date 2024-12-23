@@ -3,17 +3,17 @@ from datetime import datetime
 
 class ObjectBase(BaseModel):
     """Base model for S3 objects."""
-    filename: str
+    object_key: str
     owner_id: int
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class ObjectStorage(BaseModel):
     """Model representing object's storage information."""
-    url: HttpUrl
+    download_url: HttpUrl = Field(..., description="Download URL for the object")
     size: int = Field(..., description="Size of the object in bytes")
     bucket_id: int
     bucket_name: str
-    extension: str = Field(..., description="File extension")
+    extension: str = Field(None, description="File extension")
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class ObjectMetadata(BaseModel):

@@ -28,7 +28,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), user_repo: UserR
         if user is None:
             raise credentials_exception
 
-        user_schema = User.model_validate(user)
+        user_schema = UserResponse.model_validate(user)
         if not user_schema or not user_schema.is_active:
             raise credentials_exception
         return user_schema

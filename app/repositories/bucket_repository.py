@@ -1,4 +1,6 @@
+import os
 from datetime import datetime
+from pathlib import Path
 from typing import List
 
 import structlog
@@ -7,22 +9,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.db import get_db
+from core.config import settings
 from exceptions.sql_error import SqlError
 from models.bucket import Bucket
+from repositories.user_repository import UserRepository, get_user_repository
 from schemas import BucketResponse
 
 logger = structlog.get_logger()
+root_dir = settings.fileStorage.root_dir
 
 class BucketRepository:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, user_repo: UserRepository):
         self.session = session
+        self.user_repo = user_repo
 
-    async def create_bucket(self, bucket_name: str, owner: str) -> BucketResponse:
+    async def create_bucket(self, bucket_name: str, owner_name: str) -> BucketResponse:
         try:
+            user= await self.user_repo.get_user(owner_name)
             new_bucket = Bucket(
                 bucket_name=bucket_name,
-                owner=owner,
-                created_at=datetime.now()
+                owner_id=user.id,
+                owner_name=user.username,
+                created_at=datetime.now(),
+                updated_at=datetime.now()
             )
             self.session.add(new_bucket)
             await self.session.flush()
@@ -40,7 +49,7 @@ class BucketRepository:
                             owner_username: str) -> bool:
         try:
             bucket = await self.read_bucket(bucket_name)
-            if bucket and bucket.owner == owner_username:
+            if bucket and bucket.owner_name == owner_username:
                 await self.session.delete(bucket)
                 await self.session.commit()
                 logger.info(f"Bucket '{bucket_name}' deleted successfully.")
@@ -55,7 +64,6 @@ class BucketRepository:
             raise SqlError(f"Error deleting bucket: {e}")
 
     async def get_all_buckets(self):
-
         try:
             result = await self.session.execute(select(Bucket))
             buckets = result.scalars().all()
@@ -67,7 +75,7 @@ class BucketRepository:
             logger.error(f"Error getting all buckets: {e}")
             raise SqlError(f"Error getting all buckets: {e}")
 
-    async def read_bucket(self, bucket_name: str):
+    async def read_bucket(self, bucket_name: str) -> BucketResponse or None:
         try:
             bucket_to_read = await self.session.execute(
                 select(Bucket).where(Bucket.bucket_name == bucket_name)
@@ -85,21 +93,56 @@ class BucketRepository:
             logger.error(f"Error reading bucket: {e}")
             raise SqlError(f"Error reading bucket: {e}")
 
-    async def get_bucket_by_name(self, bucket_name: str) -> Bucket:
-        async with self.session as session:
-            result = await session.execute(select(Bucket).where(Bucket.bucket_name == bucket_name))
+    async def get_bucket_by_name(self, bucket_name: str) -> BucketResponse:
+        try:
+            result = await self.session.execute(select(Bucket).where(Bucket.bucket_name == bucket_name))
             bucket = result.scalars().first()
-            return bucket
+            logger.info(f"Bucket '{bucket_name}' found successfully.")
+            return BucketResponse.model_validate(bucket)
+        except Exception as e:
+            await self.session.rollback()
+            logger.error(f"Error getting bucket by name: {e}")
+            raise SqlError(f"Error getting bucket by name: {e}")
 
-    async def get_buckets_by_owner(self, owner_username: str) -> List[Bucket]:
-        async with self.session as session:
-            result = await session.execute(
-                select(Bucket).where(Bucket.owner == owner_username)
-            )
+
+    async def get_buckets_by_owner(self, owner_username: str) -> List[BucketResponse]:
+        try:
+            result = await self.session.execute(select(Bucket).where(Bucket.owner_name == owner_username))
             buckets = result.scalars().all()
-            return buckets
+            bucket_schemas = [BucketResponse.model_validate(bucket) for bucket in buckets]
+            for bucket_schema in bucket_schemas:
+                bucket_schema.file_count = 0
+                bucket_schema.size = 0
+                path = Path(os.path.join(root_dir, bucket_schema.bucket_name)).expanduser()
+                if path.exists():
+                    bucket_schema.file_count = count_files_recursive(path)
+                    bucket_schema.size = get_directory_size(path)
+            logger.info(f"Buckets by owner '{owner_username}' found successfully.")
+            return bucket_schemas
+        except Exception as e:
+            await self.session.rollback()
+            logger.error(f"Error getting buckets by owner: {e}")
+            raise SqlError(f"Error getting buckets by owner: {e}")
+
+async def get_bucket_repository(
+    session: AsyncSession = Depends(get_db),
+    user_repo: UserRepository = Depends(get_user_repository)
+) -> BucketRepository:
+    return BucketRepository(session=session, user_repo=user_repo)
+
+def count_files_recursive(directory):
+    """Считает количество файлов в указанной директории, включая вложенные папки."""
+    count = 0
+    for root, _, files in os.walk(directory):
+        count += len(files)
+    return count
 
 
-async def get_bucket_repository(session: AsyncSession = Depends(get_db)) -> BucketRepository:
-    return BucketRepository(session)
-
+def get_directory_size(directory):
+    """Считает размер директории, включая все вложенные файлы и папки."""
+    total_size = 0
+    for root, _, files in os.walk(directory):
+        for file in files:
+            file_path = os.path.join(root, file)
+            total_size += os.path.getsize(file_path)
+    return total_size

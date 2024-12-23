@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
-from models.base_model import base_model
+from models.base_model import base_model, mapper_registry
 from datetime import datetime
 
 class User(base_model):
@@ -12,4 +12,6 @@ class User(base_model):
     created_at = Column(DateTime, default=datetime)
     email = Column(String(100), nullable=False)
     is_active = Column(Boolean, default=True)
-    files = relationship("File", back_populates="owner")
+
+    objects = relationship("Object", back_populates="owner")
+    buckets = relationship("Bucket", back_populates="owner")

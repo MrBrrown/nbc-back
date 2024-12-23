@@ -9,6 +9,7 @@ from fastapi import Depends
 import structlog
 
 from exceptions.sql_error import SqlError
+from schemas.user_schema import UserResponse
 
 logger = structlog.get_logger()
 
@@ -33,7 +34,7 @@ class UserRepository:
             logger.error(f"Error creating user: {e}")
             raise SqlError(f"Error creating user: {e}")
 
-    async def get_user(self, username: str) -> User:
+    async def get_user(self, username: str) -> UserResponse or None:
         try:
             result = await self.session.execute(select(User).filter(User.username == username))
             user = result.scalar_one_or_none()

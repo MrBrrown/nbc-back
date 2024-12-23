@@ -27,7 +27,6 @@ from models.base_model import base_model
 from models.bucket import Bucket
 from models.user import User
 from models.object import Object
-from models.file import File
 target_metadata = base_model.metadata
 
 def run_migrations_offline() -> None:

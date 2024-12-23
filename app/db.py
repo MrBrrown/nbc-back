@@ -9,11 +9,13 @@ from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from core.config import settings, get_alembic_cfg_path, get_project_root
+from models.base_model import mapper_registry
 
 db_url = settings.db.db_url
 # подключение к базе
 engine = create_async_engine(url=db_url, echo=True, poolclass=NullPool)
 async_session_factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=True)
+mapper_registry.configure()
 
 async def init_alembic():
     # Сохраняем текущую рабочую директорию
