@@ -82,6 +82,7 @@ async def check_no_errors() -> None:
 
 @misc_router.get("/healthcheck")
 async def healthcheck() -> JSONResponse:
+    #TODO healthcheck
     try:
         db_status, services_status, resources_status, errors_status = await asyncio.gather(
             check_db_availability(),

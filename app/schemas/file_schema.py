@@ -1,17 +1,16 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, ConfigDict
 from datetime import datetime
 
 class FileBase(BaseModel):
     filename: str
     url: HttpUrl
     owner_id: int
+    model_config = ConfigDict(from_attributes=True)
 
 class FileCreate(FileBase):
-    pass
+    model_config = ConfigDict(from_attributes=True)
 
 class FileResponse(FileBase):
     id: int
     created_at: datetime
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
