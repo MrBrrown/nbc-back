@@ -1,6 +1,6 @@
 [app_settings]
-app_port = 8001
-app_host = "127.0.0.2"
+app_port = 8000
+app_host = "0.0.0.0"
 app_version = "1.0.0"
 app_name = "nbc-back"
 #префикс для всех маршрутов приложения:
@@ -13,3 +13,6 @@ db_user ="myuser"
 db_password = "mypassword"
 db_host = "localhost"
 db_port = 5432
+
+[file_storage_settings]
+root_dir = "~"

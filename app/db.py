@@ -5,17 +5,18 @@ from typing import List
 from alembic import command
 from alembic.config import Config as AlembicConfig
 from sqlalchemy import NullPool, select
+from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, AsyncSession, \
     async_scoped_session
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
 from app.models.BaseModel import base_model
-from api.v1.endpoints.objects_api import root_dir
-from core.config import settings
-from models.bucket import Bucket
-from models.object import Object
-from models.users_model import User
+from app.api.v1.endpoints.files_api import root_dir
+from app.core.config import settings
+from app.models.bucket_model import Bucket
+from app.models.users_model import User
+from app.models.files_model import StoredFile
 
 db_url = settings.db.db_url
 # подключение к базе
@@ -122,83 +123,83 @@ async def read_bucket(self, bucket_name: str):
     pass
 
 
-async def create_object(self, bucket_name: str, object_key: str, owner: str, content: str):
+async def create_file(self, bucket_name: str, file_key: str, owner: str, content: str):
     async with async_session_maker() as session:
         async with session.begin():
             try:
-                new_object = Object(
+                new_file = StoredFile(
                     bucket=bucket_name,
-                    object_key=object_key,
+                    file_key=file_key,
                     owner=owner,
-                    file_storage_path=f"{root_dir}/{bucket_name}/{object_key}",
+                    file_storage_path=f"{root_dir}/{bucket_name}/{file_key}",
                     content=content,
                     created_at=datetime.now()
                 )
-                session.add(new_object)
+                session.add(new_file)
                 await session.commit()
-                print(f"Object '{object_key}' in bucket '{bucket_name}' created successfully.")
+                print(f"StoredFile '{file_key}' in bucket '{bucket_name}' created successfully.")
             except Exception as e:
                 await session.rollback()
-                print(f"Error creating object: {e}")
+                print(f"Error creating file: {e}")
 
-async def read_object(self, bucket_name: str, object_key: str):
+async def read_file(self, bucket_name: str, file_key: str):
     async with async_session_maker() as session:
         async with session.begin():
             try:
-                object_to_read = await session.execute(
-                    select(Object).where(Object.bucket == bucket_name, Object.object_key == object_key)
+                file_to_read = await session.execute(
+                    select(StoredFile).where(StoredFile.bucket == bucket_name, StoredFile.file_key == file_key)
                 )
-                object = object_to_read.scalar_one_or_none()
+                file = file_to_read.scalar_one_or_none()
 
-                if object:
-                    return object
+                if file:
+                    return file
                 else:
-                    print(f"Object '{object_key}' in bucket '{bucket_name}' not found.")
+                    print(f"StoredFile '{file_key}' in bucket '{bucket_name}' not found.")
                     return None
             except Exception as e:
                 await session.rollback()
-                print(f"Error reading object: {e}")
+                print(f"Error reading file: {e}")
                 return None
 
-async def update_object(self, bucket_name: str, object_key: str, content: str):
+async def update_file(self, bucket_name: str, file_key: str, content: str):
     async with async_session_maker() as session:
         async with session.begin():
             try:
-                object_to_update = await session.execute(
-                    select(Object).where(Object.bucket == bucket_name, Object.object_key == object_key)
+                file_to_update = await session.execute(
+                    select(StoredFile).where(StoredFile.bucket == bucket_name, StoredFile.file_key == file_key)
                 )
-                object = object_to_update.scalar_one_or_none()
+                file = file_to_update.scalar_one_or_none()
 
-                if object:
-                    object.content = content
-                    object.updated_at = datetime.now()
+                if file:
+                    file.content = content
+                    file.updated_at = datetime.now()
                     await session.commit()
-                    print(f"Object '{object_key}' in bucket '{bucket_name}' updated successfully.")
+                    print(f"StoredFile '{file_key}' in bucket '{bucket_name}' updated successfully.")
                 else:
-                    print(f"Object '{object_key}' in bucket '{bucket_name}' not found.")
+                    print(f"StoredFile '{file_key}' in bucket '{bucket_name}' not found.")
             except Exception as e:
                 await session.rollback()
-                print(f"Error updating object: {e}")
+                print(f"Error updating file: {e}")
 
 
-async def delete_object(self, bucket_name: str, object_key: str):
+async def delete_file(self, bucket_name: str, file_key: str):
     async with async_session_maker() as session:
         async with session.begin():
             try:
-                object_to_delete = await session.execute(
-                    select(Object).where(Object.bucket == bucket_name, Object.object_key == object_key)
+                file_to_delete = await session.execute(
+                    select(StoredFile).where(StoredFile.bucket == bucket_name, IStoredFile.file_key == file_key)
                 )
-                object = object_to_delete.scalar_one_or_none()
+                file = file_to_delete.scalar_one_or_none()
 
-                if object:
-                    await session.delete(object)
+                if file:
+                    await session.delete(file)
                     await session.commit()
-                    print(f"Object '{object_key}' in bucket '{bucket_name}' deleted successfully.")
+                    print(f"StoredFile '{file_key}' in bucket '{bucket_name}' deleted successfully.")
                 else:
-                    print(f"Object '{object_key}' in bucket '{bucket_name}' not found.")
+                    print(f"StoredFile '{file_key}' in bucket '{bucket_name}' not found.")
             except Exception as e:
                 await session.rollback()
-                print(f"Error deleting object: {e}")
+                print(f"Error deleting file: {e}")
 
 
 async def create_user(self, username: str, email: str, password: str):

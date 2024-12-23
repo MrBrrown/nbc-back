@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
-from models.bucket import Bucket
+from app.models.bucket_model import Bucket
 
 class BucketRepository:
     def __init__(self, session: AsyncSession):

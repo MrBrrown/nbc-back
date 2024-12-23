@@ -31,4 +31,4 @@ dyna_settings = Dynaconf(
     settings_files=["settings.toml"],
 )
 
-settings = Settings(app=dyna_settings["app_settings"], db=dyna_settings["db_settings"])
+settings = Settings(app=dyna_settings["app_settings"], db=dyna_settings["db_settings"], fileStorage=dyna_settings["file_storage_settings"])

@@ -5,8 +5,10 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
+from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'app')))
+# sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.core.config import settings, DBConfig
 
@@ -23,11 +25,13 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from model.BaseModel import base_model
-from model.bucket import Bucket
-from app.api.models.users_model import User
-from models.object import Object
+from app.models.BaseModel import base_model
+from app.models.bucket_model import Bucket
+from app.models.users_model import User
+from app.models.files_model import StoredFile
+
 target_metadata = base_model.metadata
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -38,10 +42,10 @@ def run_migrations_offline() -> None:
 
     Calls to context.execute() here emit the given string to the script output.
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = config.get_main_option("sqlalchemy.url", settings.DATABASE_URL)
     context.configure(
         url=url,
-        target_metadata=target_metadata,
+        target_metadata=base_model.metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -60,7 +64,7 @@ async def run_migrations_online() -> None:
         await connection.run_sync(do_run_migrations)
 
 def do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(connection=connection, target_metadata= base_model.metadata)
 
     with context.begin_transaction():
         context.run_migrations()

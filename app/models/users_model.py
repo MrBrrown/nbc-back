@@ -2,16 +2,18 @@ from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
-from app.db import Base
+from app.models.BaseModel import base_model
 
-class User(Base):
+class User(base_model):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.timezone.utc)
+    created_at = Column(DateTime, default=datetime.astimezone)
 
-    files = relationship("File", back_populates="owner")
+    files = relationship("StoredFile", back_populates="owner")
 
+    class Config:
+        from_attributes = True

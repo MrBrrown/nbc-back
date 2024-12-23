@@ -1,7 +1,7 @@
 from sqlalchemy import MetaData
 from sqlalchemy.ext.declarative import declarative_base
 
-# Create MetaData object
+# Create MetaData file
 metadata = MetaData()
 
 # Define the base

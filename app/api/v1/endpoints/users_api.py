@@ -1,15 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from app.core.security import create_access_token, verify_password
-from models.users_model import User
-
-router = APIRouter()
+from app.models.users_model import User
 
 class LoginRequest(BaseModel):
     username: str
     password: str
 
-user_router = APIRouter()
+user_router = APIRouter(tags=["Users"])
 
 @user_router.post("/login")
 def login(request: LoginRequest):
@@ -31,14 +29,14 @@ async def register_user():
 async def logout_user():
     pass
 
-@user_router.put("/{user_id}")
+@user_router.post("/{user_id}")
 async def update_user(user_id: int):
     pass
 
 @user_router.get("/me/links")
-async def get_current_user_objects_links():
+async def get_current_user_files_links():
     pass
 
-@user_router.get("/me/objects")
-async def get_current_user_objects_metadata():
+@user_router.get("/me/files")
+async def get_current_user_files_metadata():
     pass

@@ -9,3 +9,4 @@ python-multipart
 prometheus-client
 passlib[bcrypt]
 jose
+pydantic[email]

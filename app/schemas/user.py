@@ -1,19 +1,21 @@
 from pydantic import BaseModel, Field, EmailStr
+from typing import ClassVar
 from typing import List, Optional
 from datetime import datetime
 
-class UserCreate(BaseModel):
+class User(BaseModel):
+    id: ClassVar[int]
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=6)
+    created_at: datetime
     email: EmailStr
 
-class User(BaseModel):
-    id: int
-    username: str
-    created_at: datetime
 
-    class Config:
-        orm_mode = True
+class UserCreate(User):
+    pass
+
+    # class Config:
+    #     from_attributes = True
 
 class Token(BaseModel):
     access_token: str

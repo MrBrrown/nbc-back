@@ -7,7 +7,7 @@ from typing import Dict, List
 from starlette.responses import JSONResponse
 from http import HTTPStatus
 
-misc_router = APIRouter()
+misc_router = APIRouter(tags=["Misc"])
 
 async def check_db_availability(db_host: str, db_port: int, timeout: int = 5) -> bool:
     """
