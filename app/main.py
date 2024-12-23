@@ -4,6 +4,7 @@ import sys
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from application import get_app
 from core.config import settings
@@ -23,6 +24,19 @@ def run_api_app() -> None:
     print("Creating FastAPI app...")
     app = FastAPI(docs_url="/docs", openapi_url="/openapi.json", redoc_url="/redoc")
     print("FastAPI app created")
+
+    # CORS configuration
+    origins = [
+        "http://localhost:3001"
+    ]
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],  # Or specify: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        allow_headers=["*"],  # Or specify: ["Content-Type", "Authorization", "buckets"]
+    )
 
     print("Add metrics middleware...")
     app.add_middleware(MetricsMiddleware)
