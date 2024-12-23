@@ -1,46 +1,54 @@
 #TODO Create repositories instead one db.py
 import asyncio
-import os
-import sys
 from datetime import datetime
-from pathlib import Path
-
+from typing import List
 from alembic import command
 from alembic.config import Config as AlembicConfig
-from sqlalchemy import NullPool
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import NullPool, select
+#from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, AsyncSession, \
+#    async_scoped_session
 
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, AsyncSession, async_scoped_session
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.future import select
+from app.models.BaseModel import base_model
 from api.v1.endpoints.objects_api import root_dir
-from core.config import settings, get_alembic_cfg_path, get_project_root
+from core.config import settings
 from models.bucket import Bucket
 from models.object import Object
-from models.user import User
-from schemas.bucket_schema import BucketSchema
+#from models.users_model import User
+
+from app.repositories.user_repository import UserRepository
 
 db_url = settings.db.db_url
 # подключение к базе
 engine = create_async_engine(url=db_url, echo=True, poolclass=NullPool)
-async_session_factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=True)
+
+async_session_maker = sessionmaker(
+    bind=engine, class_=AsyncSession, expire_on_commit=True
+)
+
+
+async def get_session():
+    async with async_session_maker() as session:
+        yield session
+
+class Base(DeclarativeBase):
+    pass
 
 async def init_alembic():
-    # Сохраняем текущую рабочую директорию
-    current_working_directory = Path.cwd()
     # Путь к файлу alembic.ini
-    alembic_cfg_path = get_alembic_cfg_path()
+    alembic_cfg_path = 'alembic.ini'
     try:
-        os.chdir(get_project_root())
         # Выполнение миграций
         alembic_cfg = AlembicConfig(alembic_cfg_path)
         await asyncio.to_thread(command.upgrade,alembic_cfg, "head")
     except Exception as e:
         print(f"Error applying Alembic migrations: {e}")
-    finally:
-        # Восстановить текущую рабочую директорию
-        os.chdir(current_working_directory)
 
-async def create_bucket(bucket_name: str):
-    async with async_session_factory() as session:
+async def create_bucket(bucket_name: str) -> Bucket:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 new_bucket = Bucket(
@@ -49,16 +57,18 @@ async def create_bucket(bucket_name: str):
                     created_at=datetime.now()
                 )
                 session.add(new_bucket)
-                await session.flush()
-                bucket_schema = BucketSchema.model_validate(new_bucket)
                 await session.commit()
-                return bucket_schema
+                return new_bucket
             except Exception as e:
                 await session.rollback()
                 print(f"Error creating bucket: {e}")
 
+
+
+
+
 async def delete_bucket (bucket_name: str):
-    async with async_session_factory() as session:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 bucket_to_delete = await session.execute(
@@ -84,20 +94,19 @@ def update_bucket(self, bucket_name: str, description: str, content: str):
     pass
 
 async def get_all_buckets():
-    async with async_session_factory() as session:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 result = await session.execute(select(Bucket))
                 buckets = result.scalars().all()
-                bucket_schemas = [BucketSchema.model_validate(bucket) for bucket in buckets]
-                return bucket_schemas
+                return buckets
             except Exception as e:
                 await session.rollback()
                 print(f"Error creating bucket: {e}")
 
 
 async def read_bucket(self, bucket_name: str):
-    async with async_session_factory() as session:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 bucket_to_read = await session.execute(
@@ -118,7 +127,7 @@ async def read_bucket(self, bucket_name: str):
 
 
 async def create_object(self, bucket_name: str, object_key: str, owner: str, content: str):
-    async with async_session_factory() as session:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 new_object = Object(
@@ -137,7 +146,7 @@ async def create_object(self, bucket_name: str, object_key: str, owner: str, con
                 print(f"Error creating object: {e}")
 
 async def read_object(self, bucket_name: str, object_key: str):
-    async with async_session_factory() as session:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 object_to_read = await session.execute(
@@ -156,7 +165,7 @@ async def read_object(self, bucket_name: str, object_key: str):
                 return None
 
 async def update_object(self, bucket_name: str, object_key: str, content: str):
-    async with async_session_factory() as session:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 object_to_update = await session.execute(
@@ -177,7 +186,7 @@ async def update_object(self, bucket_name: str, object_key: str, content: str):
 
 
 async def delete_object(self, bucket_name: str, object_key: str):
-    async with async_session_factory() as session:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 object_to_delete = await session.execute(
@@ -197,7 +206,7 @@ async def delete_object(self, bucket_name: str, object_key: str):
 
 
 async def create_user(self, username: str, email: str, password: str):
-    async with async_session_factory() as session:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 new_user = User(username=username, email=email, password=password)
@@ -209,8 +218,8 @@ async def create_user(self, username: str, email: str, password: str):
                 print(f"Error creating user: {e}")
 
 
-async def read_user(self, username: str):
-    async with async_session_factory() as session:
+async def get_user(self, username: str):
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 user_to_read = await session.execute(
@@ -230,7 +239,7 @@ async def read_user(self, username: str):
 
 
 async def update_user(self, username: str, email: str, password: str):
-    async with async_session_factory() as session:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 user_to_update = await session.execute(
@@ -251,7 +260,7 @@ async def update_user(self, username: str, email: str, password: str):
 
 
 async def delete_user(self, username: str):
-    async with async_session_factory() as session:
+    async with async_session_maker() as session:
         async with session.begin():
             try:
                 user_to_delete = await session.execute(
@@ -268,3 +277,10 @@ async def delete_user(self, username: str):
             except Exception as e:
                 await session.rollback()
                 print(f"Error deleting user: {e}")
+
+async def get_db() -> Generator[AsyncSession, None, None]:
+    async with async_session_maker() as session:
+        yield session
+
+async def get_user_repository(session: AsyncSession = Depends(get_session)) -> UserRepository:
+    return UserRepository(session)

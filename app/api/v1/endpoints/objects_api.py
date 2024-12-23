@@ -3,10 +3,10 @@ import pathlib
 from fastapi import APIRouter, UploadFile, File
 from fastapi.params import Body
 from starlette.responses import FileResponse
-from models.user import User
-from models.object import Object
-from models.bucket import Bucket
-from core.config import settings
+from app.models.users_model import User
+from app.models.object import Object
+from app.models.bucket import Bucket
+from app.core.config import settings
 
 object_router = APIRouter()
 
@@ -19,7 +19,8 @@ async def get_objects_metadata(bucket_name: str):
     pass
 
 def create_dirs(path):
-    dir_path = pathlib.Path(path).expanduser().parent
+    dir_path = pathlib.Path(path).parent
+
     if not dir_path.exists():
         # Создайте все директории в пути
         dir_path.mkdir(parents=True)
@@ -28,7 +29,7 @@ def create_dirs(path):
 async def upload_object (bucket_name: str, object_key: str, file: UploadFile = File(...)):
     full_uploaded_filename_with_extension = file.filename
     extension_without_dot = full_uploaded_filename_with_extension.split(".")[1]
-    path = pathlib.Path(os.path.join(root_dir, bucket_name, f'{object_key}.{extension_without_dot}')).expanduser()
+    path = os.path.join(root_dir,bucket_name, f'{object_key}.{extension_without_dot}')
     create_dirs(path)
     with open(path, "wb") as f:
         f.write(await file.read())

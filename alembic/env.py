@@ -8,7 +8,7 @@ from alembic import context
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'app')))
 
-from core.config import settings, DBConfig
+from app.core.config import settings, DBConfig
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -23,11 +23,10 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from models.base_model import base_model
-from models.bucket import Bucket
-from models.user import User
+from model.BaseModel import base_model
+from model.bucket import Bucket
+from app.api.models.users_model import User
 from models.object import Object
-from models.file import File
 target_metadata = base_model.metadata
 
 def run_migrations_offline() -> None:
@@ -41,7 +40,7 @@ def run_migrations_offline() -> None:
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=settings.db.db_url,
+        url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
