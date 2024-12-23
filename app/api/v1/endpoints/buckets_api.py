@@ -1,16 +1,19 @@
+from typing import List
+
 from fastapi import APIRouter, HTTPException, Depends
 
 from repositories.bucket_repository import BucketRepository, get_bucket_repository
+from schemas import BucketSchema
 from schemas.user_schema import User
 from services.auth_service import get_current_user
 
 bucket_router = APIRouter()
 
-@bucket_router.get("/")
+@bucket_router.get("/", response_model=List[BucketSchema])
 async def get_buckets(bucket_repo: BucketRepository = Depends(get_bucket_repository),
                       current_user: User = Depends(get_current_user)):
-    #todo select only buckets owned by current user
-    buckets = await bucket_repo.get_all_buckets()
+
+    buckets = await bucket_repo.get_buckets_by_owner(current_user.username)
     return buckets
 
 @bucket_router.put("/{bucket_name}")
@@ -27,12 +30,13 @@ async def create_bucket(bucket_name: str,
 @bucket_router.delete("/{bucket_name}")
 async def delete_bucket(bucket_name: str,
                         bucket_repo: BucketRepository = Depends(get_bucket_repository),
-                        current_user: User = Depends(get_current_user))-> dict:
-    #todo check if bucket is owned by current user
-    result = await bucket_repo.delete_bucket(bucket_name)
+                        current_user: User = Depends(get_current_user)
+                        )-> dict:
+    result = await bucket_repo.delete_bucket(bucket_name, current_user.username)
+
     if result is True:
         return {"detail": f"Bucket '{bucket_name}' deleted successfully."}
-    elif result is False:
+    elif result is None:
         raise HTTPException(status_code=404, detail=f"Bucket '{bucket_name}' not found.")
     else:
-        raise HTTPException(status_code=500, detail=result)
+        raise HTTPException(status_code=403, detail="You do not have permission to delete this bucket")

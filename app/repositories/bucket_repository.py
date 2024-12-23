@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 import structlog
 from fastapi import Depends
@@ -34,14 +35,19 @@ class BucketRepository:
             logger.error(f"Error creating bucket: {e}")
             raise SqlError(f"Error creating bucket: {e}")
 
-    async def delete_bucket(self, bucket_name: str) -> bool:
+    async def delete_bucket(self,
+                            bucket_name: str,
+                            owner_username: str) -> bool:
         try:
             bucket = await self.read_bucket(bucket_name)
-            if bucket:
+            if bucket and bucket.owner == owner_username:
                 await self.session.delete(bucket)
                 await self.session.commit()
                 logger.info(f"Bucket '{bucket_name}' deleted successfully.")
                 return True
+            elif bucket:
+                logger.warning(f"Attempt to delete bucket '{bucket_name}' by non-owner '{owner_username}'")
+                return False
             return False
         except Exception as e:
             await self.session.rollback()
@@ -84,6 +90,14 @@ class BucketRepository:
             result = await session.execute(select(Bucket).where(Bucket.bucket_name == bucket_name))
             bucket = result.scalars().first()
             return bucket
+
+    async def get_buckets_by_owner(self, owner_username: str) -> List[Bucket]:
+        async with self.session as session:
+            result = await session.execute(
+                select(Bucket).where(Bucket.owner == owner_username)
+            )
+            buckets = result.scalars().all()
+            return buckets
 
 
 async def get_bucket_repository(session: AsyncSession = Depends(get_db)) -> BucketRepository:
