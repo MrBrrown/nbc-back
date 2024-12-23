@@ -9,8 +9,11 @@ from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from starlette.responses import FileResponse, Response
 
 from core.config import settings
+from repositories.bucket_repository import BucketRepository, get_bucket_repository
 from schemas.user_schema import User
 from services.auth_service import get_current_user
+
+
 
 object_router = APIRouter()
 
@@ -26,9 +29,17 @@ def create_dirs(path):
         dir_path.mkdir(parents=True)
 
 @object_router.put("/{bucket_name}/{object_key}")
-async def upload_object (bucket_name: str, object_key: str, file: UploadFile = File(...),
-                         current_user: User = Depends(get_current_user)):
-    #todo check if bucket is owned by current user
+async def upload_object (bucket_name: str,
+                         object_key: str,
+                         file: UploadFile = File(...),
+                         current_user: User = Depends(get_current_user),
+                         bucket_repo: BucketRepository = Depends(get_bucket_repository)):
+
+    bucket = await bucket_repo.get_bucket_by_name(bucket_name)
+
+    if bucket is None or bucket.owner != current_user.username:
+        raise HTTPException(status_code=403, detail="You do not have permission to upload to this bucket")
+
     full_uploaded_filename_with_extension = file.filename
     extension_without_dot = full_uploaded_filename_with_extension.split(".")[1]
     path = pathlib.Path(os.path.join(root_dir, bucket_name, f'{object_key}.{extension_without_dot}')).expanduser()
@@ -36,6 +47,8 @@ async def upload_object (bucket_name: str, object_key: str, file: UploadFile = F
     with open(path, "wb") as f:
         f.write(await file.read())
     return {"detail": f"Object '{object_key}' in bucket '{bucket_name}' uploaded successfully. Path to uploaded file: {path}"}
+
+
 
 @object_router.get("/{bucket_name}/{object_key}")
 async def download_object (bucket_name: str, object_key: str):

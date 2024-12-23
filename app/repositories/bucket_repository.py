@@ -79,6 +79,13 @@ class BucketRepository:
             logger.error(f"Error reading bucket: {e}")
             raise SqlError(f"Error reading bucket: {e}")
 
+    async def get_bucket_by_name(self, bucket_name: str) -> Bucket:
+        async with self.session as session:
+            result = await session.execute(select(Bucket).where(Bucket.bucket_name == bucket_name))
+            bucket = result.scalars().first()
+            return bucket
+
 
 async def get_bucket_repository(session: AsyncSession = Depends(get_db)) -> BucketRepository:
     return BucketRepository(session)
+
