@@ -35,6 +35,7 @@ async def upload_object (bucket_name: str,
                          current_user: User = Depends(get_current_user),
                          bucket_repo: BucketRepository = Depends(get_bucket_repository)):
 
+    # check if bucket is owned by current user
     bucket = await bucket_repo.get_bucket_by_name(bucket_name)
 
     if bucket is None or bucket.owner != current_user.username:
@@ -51,8 +52,17 @@ async def upload_object (bucket_name: str,
 
 
 @object_router.get("/{bucket_name}/{object_key}")
-async def download_object (bucket_name: str, object_key: str):
-    #todo check if bucket is owned by current user
+async def download_object (bucket_name: str,
+                           object_key: str,
+                           current_user: User = Depends(get_current_user),
+                           bucket_repo: BucketRepository = Depends(get_bucket_repository)
+                           ):
+    # check if bucket is owned by current user
+    bucket = await bucket_repo.get_bucket_by_name(bucket_name)
+
+    if bucket is None or bucket.owner != current_user.username:
+        raise HTTPException(status_code=403, detail="You do not have permission to download from this bucket")
+
     path = pathlib.Path(os.path.join(root_dir,bucket_name, object_key)).expanduser()
     return FileResponse(path)
 
