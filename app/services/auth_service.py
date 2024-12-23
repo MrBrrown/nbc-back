@@ -4,9 +4,9 @@ from jose import jwt
 
 from core.security import oauth2_scheme, SECRET_KEY, ALGORITHM
 from repositories.user_repository import UserRepository, get_user_repository
-from schemas.user_schema import User, TokenData
+from schemas.user_schema import UserResponse, TokenData
 
-async def get_current_user(token: str = Depends(oauth2_scheme), user_repo: UserRepository = Depends(get_user_repository)) -> User:
+async def get_current_user(token: str = Depends(oauth2_scheme), user_repo: UserRepository = Depends(get_user_repository)) -> UserResponse:
     #TODO replace with exception not related to HTTP, move raise HTTP exceptions to api controllers
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

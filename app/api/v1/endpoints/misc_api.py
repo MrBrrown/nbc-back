@@ -1,15 +1,28 @@
-from fastapi import APIRouter
 import asyncio
-import aiohttp
 import logging
-import psutil
-from typing import Dict, List
-from starlette.responses import JSONResponse
 from http import HTTPStatus
+from typing import Dict, List
+
+import aiohttp
+import psutil
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 misc_router = APIRouter()
 
-async def check_db_availability(db_host: str, db_port: int, timeout: int = 5) -> bool:
+class DatabaseUnavailableError(Exception):
+    pass
+
+class ServiceUnavailableError(Exception):
+    pass
+
+class ResourceUnavailableError(Exception):
+    pass
+
+class ErrorsPresentError(Exception):
+    pass
+
+async def check_db_availability(db_host: str = "localhost", db_port: int = 5432, timeout: int = 5) -> None:
     """
     Check if a database is available.
 
@@ -18,32 +31,48 @@ async def check_db_availability(db_host: str, db_port: int, timeout: int = 5) ->
     - db_port (int): Database port.
     - timeout (int): Timeout in seconds. Defaults to 5.
 
-    Returns:
-    - bool: True if the database is available, False otherwise.
+    Raises:
+    - DatabaseUnavailableError: If the database is not available.
     """
     try:
         # Create a socket with a timeout
         reader, writer = await asyncio.wait_for(asyncio.open_connection(db_host, db_port), timeout=timeout)
         writer.close()
         await writer.wait_closed()
-        return True
-    except (ConnectionRefusedError, asyncio.TimeoutError):
-        logging.error(f"Database at {db_host}:{db_port} is not available")
-        return False
+    except (ConnectionRefusedError, asyncio.TimeoutError) as e:
+        logging.error(f"Database at {db_host}:{db_port} is not available: {e}")
+        raise DatabaseUnavailableError(f"Database at {db_host}:{db_port} is not available") from e
 
-async def check_services_availability(services: List[Dict[str, str]]) -> None:
+async def check_services_availability(services: List[Dict[str, str]] = None) -> None:
+    """
+    Check if services are available.
+
+    Args:
+    - services (List[Dict[str, str]]): List of services to check.
+
+    Raises:
+    - ServiceUnavailableError: If any of the services are not available.
+    """
+    if services is None:
+        services = []
     async with aiohttp.ClientSession() as session:
         for service in services:
             try:
                 async with session.get(service['url']) as response:
-                    if response.status == 200:
-                        print(f"{service['name']} is available")
-                    else:
-                        print(f"{service['name']} is not available")
-            except aiohttp.ClientError:
-                print(f"Failed to check {service['name']}")
+                    if response.status != 200:
+                        logging.error(f"{service['name']} is not available (status code: {response.status})")
+                        raise ServiceUnavailableError(f"{service['name']} is not available")
+            except aiohttp.ClientError as e:
+                logging.error(f"Failed to check {service['name']}: {e}")
+                raise ServiceUnavailableError(f"Failed to check {service['name']}") from e
 
-async def check_resources_availability() -> Dict[str, bool]:
+async def check_resources_availability() -> None:
+    """
+    Check if system resources are available.
+
+    Raises:
+    - ResourceUnavailableError: If any of the resources are not available.
+    """
     # Get current system resource usage
     cpu_usage: float = psutil.cpu_percent()
     memory_usage: float = psutil.virtual_memory().percent
@@ -55,20 +84,18 @@ async def check_resources_availability() -> Dict[str, bool]:
     disk_threshold: int = 90
 
     # Check if resources are available
-    cpu_available: bool = cpu_usage < cpu_threshold
-    memory_available: bool = memory_usage < memory_threshold
-    disk_available: bool = disk_usage < disk_threshold
-
-    # Return a dictionary with resource availability status
-    return {
-        'cpu': cpu_available,
-        'memory': memory_available,
-        'disk': disk_available
-    }
-
+    if cpu_usage >= cpu_threshold:
+        logging.error(f"CPU usage is too high: {cpu_usage}%")
+        raise ResourceUnavailableError("CPU usage is too high")
+    if memory_usage >= memory_threshold:
+        logging.error(f"Memory usage is too high: {memory_usage}%")
+        raise ResourceUnavailableError("Memory usage is too high")
+    if disk_usage >= disk_threshold:
+        logging.error(f"Disk usage is too high: {disk_usage}%")
+        raise ResourceUnavailableError("Disk usage is too high")
 
 async def get_errors() -> list[str]:
-    #TODO
+    # TODO
     # Replace this with your actual error retrieval logic
     # For example, let's assume we're retrieving errors from a database
     # errors = await database.query("SELECT error_message FROM errors")
@@ -76,38 +103,40 @@ async def get_errors() -> list[str]:
     return []
 
 async def check_no_errors() -> None:
+    """
+    Check if there are any errors.
+
+    Raises:
+    - ErrorsPresentError: If errors are found.
+    """
     errors = await get_errors()
     if errors:
-        raise Exception("Errors found")
+        logging.error(f"Errors found: {errors}")
+        raise ErrorsPresentError("Errors found")
 
 @misc_router.get("/healthcheck")
 async def healthcheck() -> JSONResponse:
-    #TODO healthcheck
+    # TODO healthcheck
     try:
-        db_status, services_status, resources_status, errors_status = await asyncio.gather(
+        results = await asyncio.gather(
             check_db_availability(),
-            check_services_availability(),
+            check_services_availability([{"name": "example", "url": "http://example.com"}]), # пример сервиса
             check_resources_availability(),
             check_no_errors(),
+            return_exceptions=True
         )
     except Exception as e:
         logging.error(f"Healthcheck failed with exception: {e}")
         return JSONResponse({"error": "Internal error"}, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-    if not db_status:
-        logging.warning("Database is not available")
-        return JSONResponse({"error": "Database is not available"}, status_code=HTTPStatus.SERVICE_UNAVAILABLE)
-
-    if not services_status:
-        logging.warning("Services are not available")
-        return JSONResponse({"error": "Services are not available"}, status_code=HTTPStatus.SERVICE_UNAVAILABLE)
-
-    if not resources_status:
-        logging.warning("Resources are not available")
-        return JSONResponse({"error": "Resources are not available"}, status_code=HTTPStatus.SERVICE_UNAVAILABLE)
-
-    if not errors_status:
-        logging.warning("Errors are present")
-        return JSONResponse({"error": "Errors are present"}, status_code=HTTPStatus.SERVICE_UNAVAILABLE)
+    for result in results:
+        if isinstance(result, DatabaseUnavailableError):
+            return JSONResponse({"error": "Database is not available"}, status_code=HTTPStatus.SERVICE_UNAVAILABLE)
+        elif isinstance(result, ServiceUnavailableError):
+            return JSONResponse({"error": "Services are not available"}, status_code=HTTPStatus.SERVICE_UNAVAILABLE)
+        elif isinstance(result, ResourceUnavailableError):
+            return JSONResponse({"error": "Resources are not available"}, status_code=HTTPStatus.SERVICE_UNAVAILABLE)
+        elif isinstance(result, ErrorsPresentError):
+            return JSONResponse({"error": "Errors are present"}, status_code=HTTPStatus.SERVICE_UNAVAILABLE)
 
     return JSONResponse({"status": "OK"}, status_code=HTTPStatus.OK)

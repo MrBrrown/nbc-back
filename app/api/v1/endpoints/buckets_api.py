@@ -3,15 +3,15 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends
 
 from repositories.bucket_repository import BucketRepository, get_bucket_repository
-from schemas import BucketSchema
-from schemas.user_schema import User
+from schemas import BucketResponse
+from schemas.user_schema import UserResponse
 from services.auth_service import get_current_user
 
 bucket_router = APIRouter()
 
-@bucket_router.get("/", response_model=List[BucketSchema])
+@bucket_router.get("/", response_model=List[BucketResponse])
 async def get_buckets(bucket_repo: BucketRepository = Depends(get_bucket_repository),
-                      current_user: User = Depends(get_current_user)):
+                      current_user: UserResponse = Depends(get_current_user)):
 
     buckets = await bucket_repo.get_buckets_by_owner(current_user.username)
     return buckets
@@ -19,7 +19,7 @@ async def get_buckets(bucket_repo: BucketRepository = Depends(get_bucket_reposit
 @bucket_router.put("/{bucket_name}")
 async def create_bucket(bucket_name: str,
                         bucket_repo: BucketRepository = Depends(get_bucket_repository),
-                        current_user: User = Depends(get_current_user)):
+                        current_user: UserResponse = Depends(get_current_user)):
     try:
         bucket = await bucket_repo.create_bucket(bucket_name, current_user.username)
         return bucket
@@ -30,7 +30,7 @@ async def create_bucket(bucket_name: str,
 @bucket_router.delete("/{bucket_name}")
 async def delete_bucket(bucket_name: str,
                         bucket_repo: BucketRepository = Depends(get_bucket_repository),
-                        current_user: User = Depends(get_current_user)
+                        current_user: UserResponse = Depends(get_current_user)
                         )-> dict:
     result = await bucket_repo.delete_bucket(bucket_name, current_user.username)
 

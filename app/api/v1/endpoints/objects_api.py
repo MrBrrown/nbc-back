@@ -10,7 +10,7 @@ from starlette.responses import FileResponse, Response
 
 from core.config import settings
 from repositories.bucket_repository import BucketRepository, get_bucket_repository
-from schemas.user_schema import User
+from schemas.user_schema import UserResponse
 from services.auth_service import get_current_user
 
 
@@ -32,7 +32,7 @@ def create_dirs(path):
 async def upload_object (bucket_name: str,
                          object_key: str,
                          file: UploadFile = File(...),
-                         current_user: User = Depends(get_current_user),
+                         current_user: UserResponse = Depends(get_current_user),
                          bucket_repo: BucketRepository = Depends(get_bucket_repository)):
 
     # check if bucket is owned by current user
@@ -54,7 +54,7 @@ async def upload_object (bucket_name: str,
 @object_router.get("/{bucket_name}/{object_key}")
 async def download_object (bucket_name: str,
                            object_key: str,
-                           current_user: User = Depends(get_current_user),
+                           current_user: UserResponse = Depends(get_current_user),
                            bucket_repo: BucketRepository = Depends(get_bucket_repository)
                            ):
     # check if bucket is owned by current user
@@ -68,7 +68,7 @@ async def download_object (bucket_name: str,
 
 @object_router.head("/{bucket_name}/{object_key}/metadata", response_description="Get metadata for a specific object")
 async def get_object_metadata(bucket_name: str, object_key: str, response: Response,
-                              current_user: User = Depends(get_current_user)):
+                              current_user: UserResponse = Depends(get_current_user)):
     # Вызываем общую функцию и добавляем метаданные в заголовки
     metadata = await get_obj_metadata(bucket_name, object_key)
 
@@ -82,7 +82,7 @@ async def get_object_metadata(bucket_name: str, object_key: str, response: Respo
 
 @object_router.get("/{bucket_name}", response_description="Get metadata for all objects in a bucket")
 async def get_objects_metadata(bucket_name: str,
-                                current_user: User = Depends(get_current_user),
+                                current_user: UserResponse = Depends(get_current_user),
                                 bucket_repo: BucketRepository = Depends(get_bucket_repository)
                                ) -> List[dict]:
 
@@ -139,7 +139,7 @@ async def get_obj_metadata(bucket_name: str, object_key: str) -> dict:
 
 @object_router.delete("/{bucket_name}/{object_key}")
 async def delete_object (bucket_name: str, object_key: str,
-                         current_user: User = Depends(get_current_user)):
+                         current_user: UserResponse = Depends(get_current_user)):
     # Проверка на запрещённые символы в пути
     if re.search(r'[<>:"/\\|?*]', bucket_name) or re.search(r'[<>:"/\\|?*]', object_key):
         raise HTTPException(status_code=400, detail="Invalid characters in bucket name or object key")

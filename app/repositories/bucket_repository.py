@@ -9,7 +9,7 @@ from sqlalchemy.future import select
 from app.db import get_db
 from exceptions.sql_error import SqlError
 from models.bucket import Bucket
-from schemas import BucketSchema
+from schemas import BucketResponse
 
 logger = structlog.get_logger()
 
@@ -17,7 +17,7 @@ class BucketRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_bucket(self, bucket_name: str, owner: str) -> BucketSchema:
+    async def create_bucket(self, bucket_name: str, owner: str) -> BucketResponse:
         try:
             new_bucket = Bucket(
                 bucket_name=bucket_name,
@@ -26,7 +26,7 @@ class BucketRepository:
             )
             self.session.add(new_bucket)
             await self.session.flush()
-            bucket_schema = BucketSchema.model_validate(new_bucket)
+            bucket_schema = BucketResponse.model_validate(new_bucket)
             await self.session.commit()
             logger.info(f"Bucket '{bucket_name}' created successfully.")
             return bucket_schema
@@ -59,7 +59,7 @@ class BucketRepository:
         try:
             result = await self.session.execute(select(Bucket))
             buckets = result.scalars().all()
-            bucket_schemas = [BucketSchema.model_validate(bucket) for bucket in buckets]
+            bucket_schemas = [BucketResponse.model_validate(bucket) for bucket in buckets]
             return bucket_schemas
 
         except Exception as e:
