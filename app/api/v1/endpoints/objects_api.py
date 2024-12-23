@@ -82,8 +82,17 @@ async def get_object_metadata(bucket_name: str, object_key: str, response: Respo
 
 @object_router.get("/{bucket_name}", response_description="Get metadata for all objects in a bucket")
 async def get_objects_metadata(bucket_name: str,
-                                current_user: User = Depends(get_current_user)) -> List[dict]:
-    #todo select only objects owned by current user
+                                current_user: User = Depends(get_current_user),
+                                bucket_repo: BucketRepository = Depends(get_bucket_repository)
+                               ) -> List[dict]:
+
+    # Получить информацию о бакете
+    bucket = await bucket_repo.get_bucket_by_name(bucket_name)
+
+    # Проверить, принадлежит ли бакет текущему пользователю
+    if bucket is None or bucket.owner != current_user.username:
+        raise HTTPException(status_code=403, detail="You do not have permission to access this bucket")
+
     bucket_path = pathlib.Path(os.path.join(root_dir, bucket_name)).expanduser()
 
     if not os.path.exists(bucket_path) or not os.path.isdir(bucket_path):
