@@ -30,24 +30,31 @@ class BucketRepository:
             existing_bucket = existing_bucket.scalar_one_or_none()
 
             if existing_bucket:
-                raise HTTPException(status_code=400, detail=f"Bucket with name '{bucket_name}' already exists")
+                existing_bucket.owner_name = owner_name
+                existing_bucket.updated_at = datetime.now()
+                self.session.add(existing_bucket)
+                await self.session.flush()
+                bucket_schema = BucketResponse.model_validate(existing_bucket)
+                await self.session.commit()
 
-            user = await self.user_repo.get_user(owner_name)
+                logger.info(f"Bucket '{bucket_name}' updated successfully.")
+                return bucket_schema
 
-            new_bucket = Bucket(
-                bucket_name=bucket_name,
-                owner_id=user.id,
-                owner_name=user.username,
-                created_at=datetime.now(),
-                updated_at=datetime.now()
-            )
-            self.session.add(new_bucket)
-            await self.session.flush()
-            bucket_schema = BucketResponse.model_validate(new_bucket)
-            await self.session.commit()
-
-            logger.info(f"Bucket '{bucket_name}' created successfully.")
-            return bucket_schema
+            else:
+                user = await self.user_repo.get_user(owner_name)
+                new_bucket = Bucket(
+                    bucket_name=bucket_name,
+                    owner_id=user.id,
+                    owner_name=user.username,
+                    created_at=datetime.now(),
+                    updated_at=datetime.now()
+                )
+                self.session.add(new_bucket)
+                await self.session.flush()
+                bucket_schema = BucketResponse.model_validate(new_bucket)
+                await self.session.commit()
+                logger.info(f"Bucket '{bucket_name}' created successfully.")
+                return bucket_schema
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Error creating bucket: {e}")
