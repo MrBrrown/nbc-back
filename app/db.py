@@ -1,7 +1,7 @@
 import asyncio
 import os
 from pathlib import Path
-from typing import Generator
+from typing import Generator, AsyncGenerator
 
 from alembic import command
 from alembic.config import Config as AlembicConfig
@@ -9,6 +9,7 @@ from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from .core.config import settings, get_alembic_cfg_path, get_project_root
+from .core.logging import logger
 from .models.base_model import mapper_registry
 
 db_url = settings.db.db_url
@@ -37,6 +38,13 @@ async def get_session():
     async with async_session_factory() as session:
         yield session
 
-async def get_db() -> Generator[AsyncSession, None, None]:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:
-        yield session
+        try:
+            yield session
+        except Exception as e:
+            logger.error(f"Session rollback because of exception: {e}")
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
