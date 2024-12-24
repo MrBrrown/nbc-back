@@ -9,7 +9,7 @@ from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from .core.config import settings, get_alembic_cfg_path, get_project_root
-from .core.logging import logger
+from loguru import logger
 from .models.base_model import mapper_registry
 
 db_url = settings.db.db_url
