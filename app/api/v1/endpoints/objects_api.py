@@ -106,8 +106,6 @@ async def get_objects_metadata(bucket_name: str,
         if bucket is None or bucket.owner_name != current_user.username:
             raise HTTPException(status_code=403, detail="You do not have permission to access this bucket")
         bucket_path = pathlib.Path(os.path.join(root_dir, bucket_name)).expanduser()
-        if not os.path.exists(bucket_path) or not os.path.isdir(bucket_path):
-            raise HTTPException(status_code=404, detail=f"Bucket '{bucket_name}' not found")
         objects =  await object_repo.get_all_objects(bucket_name, current_user.username)
         return objects
     except Exception as e:
