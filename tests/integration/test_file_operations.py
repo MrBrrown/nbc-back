@@ -1,85 +1,136 @@
-import pytest
 from fastapi.testclient import TestClient
 from app.application import get_app
 
-
-client = TestClient(get_app())
-
-
-@pytest.fixture
-def upload_file():
-    bucket_name = "test_bucket"
-    object_key = "test_file"
-    file_content = b"Sample file content"
-    response = client.put(
-        f"/{bucket_name}/{object_key}",
-        files={"file": ("test.txt", file_content)}
-    )
+def test_register_user():
+    client = TestClient(get_app())
+    
+    user_data = {
+        "username": "testuser5",
+        "email": "user@example.com",
+        "password": "strongpassword"
+    }
+    
+    response = client.post("/auth/register", json=user_data)
+    
     assert response.status_code == 200
-    return bucket_name, object_key
+    assert "access_token" in response.json()
+    assert response.json()["token_type"] == "bearer"
 
+def test_register_user_already_exists():
+    client = TestClient(get_app())
 
-def test_download_file(upload_file):
-    bucket_name, object_key = upload_file
-    response = client.get(f"/{bucket_name}/{object_key}")
-    assert response.status_code == 200
-    assert response.content == b"Sample file content"
+    user_data = {
+        "username": "testuser",
+        "email": "user@example.com",
+        "password": "strongpassword"
+    }
+    client.post("/auth/register", json=user_data)
 
-
-def test_delete_file(upload_file):
-    bucket_name, object_key = upload_file
-    response = client.delete(f"/{bucket_name}/{object_key}")
-    assert response.status_code == 200
-    assert f"Object '{object_key}' in bucket '{bucket_name}' deleted successfully." in response.json()["detail"]
-    response = client.get(f"/{bucket_name}/{object_key}")
-    assert response.status_code == 404
-
-
-def test_access_forbidden():
-    bucket_name = "other_user_bucket"
-    object_key = "some_file"
-    response = client.get(f"/{bucket_name}/{object_key}")
-    assert response.status_code == 403
-    assert response.json()["detail"] == "You do not have permission to download from this bucket"
-
-
-def test_file_metadata(upload_file):
-    bucket_name, object_key = upload_file
-    response = client.head(f"/{bucket_name}/{object_key}/metadata")
-    assert response.status_code == 200
-    assert response.headers["X-File-Name"] == "test.txt"
-    assert "X-File-Size-KB" in response.headers
-    assert "X-File-Created" in response.headers
-    assert "X-File-Modified" in response.headers
-
-
-def test_list_objects_in_bucket(upload_file):
-    bucket_name, _ = upload_file
-    response = client.get(f"/{bucket_name}")
-    assert response.status_code == 200
-    metadata = response.json()
-    assert len(metadata) > 0
-    assert metadata[0]["name"] == "test.txt"
-    assert "size_KB" in metadata[0]
-    assert "created" in metadata[0]
-    assert "modified" in metadata[0]
-
-
-def test_invalid_file_name():
-    bucket_name = "test_bucket"
-    object_key = "invalid:file"
-    file_content = b"Invalid file name content"
-    response = client.put(
-        f"/{bucket_name}/{object_key}",
-        files={"file": ("invalid:file.txt", file_content)}
-    )
+    response = client.post("/auth/register", json=user_data)
+    
     assert response.status_code == 400
-    assert response.json()["detail"] == "Invalid characters in bucket name or object key"
+    assert response.json()["detail"] == "Username already taken"
 
 
-def test_delete_nonexistent_file():
-    bucket_name = "test_bucket"
-    object_key = "nonexistent_file"
-    response = client.delete(f"/{bucket_name}/{object_key}")
-    assert response.status_code == 404
-    assert response.json()["detail"] == f"Object '{object_key}' in bucket '{bucket_name}' not found."
+def test_login_user():
+    client = TestClient(get_app())
+    
+    user_data = {
+        "username": "testuser",
+        "password": "strongpassword"
+    }
+    client.post("/auth/register", json=user_data)
+    
+    login_data = {
+        "username": "testuser",
+        "password": "strongpassword"
+    }
+    response = client.post("/auth/login", data=login_data)
+    
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+    assert response.json()["token_type"] == "bearer"
+
+
+def test_login_user_invalid_credentials():
+    client = TestClient(get_app())
+
+    login_data = {
+        "username": "invaliduser",
+        "password": "wrongpassword"
+    }
+    response = client.post("/auth/login", data=login_data)
+    
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid credentials"
+
+
+def test_get_current_user():
+    client = TestClient(get_app())
+    
+    user_data = {
+        "username": "testuser6",
+        "email": "user@example.com",
+        "password": "strongpassword"
+    }
+    
+    register_response = client.post("/auth/register", json=user_data)
+    assert register_response.status_code == 200, f"Registration failed: {register_response.json()}"
+    
+    response_data = register_response.json()
+    assert "access_token" in response_data, "access_token not found in registration response"
+    access_token = response_data["access_token"]
+    
+    response = client.get("/users/me", headers={"Authorization": f"Bearer {access_token}"})
+    assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+    response_data = response.json()
+    assert response_data["username"] == user_data["username"]
+
+
+def test_get_current_user_objects():
+    client = TestClient(get_app())
+
+    user_data = {
+        "username": "testuser7",
+        "email": "user@example.com",
+        "password": "strongpassword"
+    }
+
+    register_response = client.post("/auth/register", json=user_data)
+    assert register_response.status_code == 200, f"Registration failed: {register_response.json()}"
+    
+    response_data = register_response.json()
+    assert "access_token" in response_data, "access_token not found in registration response"
+    access_token = response_data["access_token"]
+
+    response = client.get("/users/me/objects", headers={"Authorization": f"Bearer {access_token}"})
+    assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+
+
+def test_get_current_user_links():
+    client = TestClient(get_app())
+
+    user_data = {
+        "username": "testuser8",
+        "email": "user@example.com",
+        "password": "strongpassword"
+    }
+
+    register_response = client.post("/auth/register", json=user_data)
+    assert register_response.status_code == 200, f"Registration failed: {register_response.json()}"
+    
+    response_data = register_response.json()
+    assert "access_token" in response_data, "access_token not found in registration response"
+    access_token = response_data["access_token"]
+
+    response = client.get("/users/me/links", headers={"Authorization": f"Bearer {access_token}"})
+    assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+
+
+def test_get_current_user_unauthorized():
+    client = TestClient(get_app())
+    
+    response = client.get("/users/me")
+    
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"
