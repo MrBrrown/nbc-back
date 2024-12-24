@@ -2,10 +2,10 @@ from typing import List
 
 from fastapi import APIRouter, HTTPException, Depends
 
-from repositories.bucket_repository import BucketRepository, get_bucket_repository
-from schemas import BucketResponse
-from schemas.user_schema import UserResponse
-from services.auth_service import get_current_user
+from ....repositories.bucket_repository import BucketRepository, get_bucket_repository
+from ....schemas import BucketResponse
+from ....schemas.user_schema import UserResponse
+from ....services.auth_service import get_current_user
 
 bucket_router = APIRouter()
 

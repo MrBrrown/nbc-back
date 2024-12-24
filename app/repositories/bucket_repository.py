@@ -8,12 +8,12 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.db import get_db
-from core.config import settings
-from exceptions.sql_error import SqlError
-from models.bucket import Bucket
-from repositories.user_repository import UserRepository, get_user_repository
-from schemas import BucketResponse
+from ..db import get_db
+from ..core.config import settings
+from ..exceptions.sql_error import SqlError
+from ..models.bucket import Bucket
+from ..repositories.user_repository import UserRepository, get_user_repository
+from ..schemas import BucketResponse
 
 logger = structlog.get_logger()
 root_dir = settings.fileStorage.root_dir

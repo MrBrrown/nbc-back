@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
-from models.base_model import base_model
+from .base_model import base_model
 
 class Object(base_model):
     __tablename__ = 'object'

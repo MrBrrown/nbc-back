@@ -1,0 +1,19 @@
+apiVersion: 1
+
+datasources:
+- name: PostgreSQL5 # Имя datasource в Grafana
+  id: 1
+  type: postgres  # Тип datasource
+  url: db:5432  # <имя_контейнера_postgres>:<порт>
+  database: storage_db # Имя базы данных
+  user: postgres      # Имя пользователя
+  secureJsonData:
+    password: postgres
+  jsonData:
+    sslmode: "disable"  # Настройки SSL (disable, require, verify-ca, verify-full)
+    # Другие опциональные настройки, например:
+    # maxOpenConns: 100  # Максимальное количество открытых соединений
+    # maxIdleConns: 10   # Максимальное количество простаивающих соединений
+    # connMaxLifetime: 14400 # Максимальное время жизни соединения в секундах
+    # postgresVersion: 903 # Версия PostgreSQL (903 = 9.3, 904 = 9.4, ..., 12 = 12 и т.д. автоопределение = 0 )
+    # timescaledb: false # Если используете TimescaleDB

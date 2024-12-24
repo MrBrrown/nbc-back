@@ -3,13 +3,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 
-from core.config import settings
-from db import get_db
-from exceptions.sql_error import SqlError
-from models.object import Object
-from repositories.bucket_repository import logger, BucketRepository, get_bucket_repository
-from repositories.user_repository import UserRepository, get_user_repository
-from schemas.object_schema import ObjectResponse
+from ..core.config import settings
+from ..db import get_db
+from ..exceptions.sql_error import SqlError
+from ..models.object import Object
+from ..repositories.bucket_repository import logger, BucketRepository, get_bucket_repository
+from ..repositories.user_repository import UserRepository, get_user_repository
+from ..schemas.object_schema import ObjectResponse
 
 root_dir = settings.fileStorage.root_dir
 

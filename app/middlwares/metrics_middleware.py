@@ -1,25 +1,30 @@
-from fastapi import  Request
 from time import time
+
+import structlog
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
-import structlog
+from starlette.routing import Match
+from starlette.types import ASGIApp
+
+from ..core.metrics import record_request_metrics
 
 logger = structlog.get_logger()
 
-def record_request_metrics(method: str, endpoint: str, status_code: int, duration: float):
-    logger.info("Request processed", method=method, endpoint=endpoint, status_code=status_code, duration=duration)
-
 class MetricsMiddleware(BaseHTTPMiddleware):
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    def __init__(self, app: ASGIApp) -> None:
+        super().__init__(app)
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         start_time = time()
+
+        # Исключаем эндпоинт /metrics из метрик
+        if any(request.url.path == "/metrics" for route in request.app.routes if isinstance(route, Match)):
+            return await call_next(request)
+
         response = await call_next(request)
         process_time = time() - start_time
-        record_request_metrics(
-            method=request.method,
-            endpoint=request.url.path,
-            status_code=response.status_code,
-            duration=process_time
-        )
+
+        record_request_metrics(request.method, request.url.path, response.status_code, process_time)
+
         return response

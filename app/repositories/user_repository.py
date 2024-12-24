@@ -3,13 +3,13 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update
-from models.user import User
-from app.db import get_db
+from ..models.user import User
+from ..db import get_db
 from fastapi import Depends
 import structlog
 
-from exceptions.sql_error import SqlError
-from schemas.user_schema import UserResponse
+from ..exceptions.sql_error import SqlError
+from ..schemas.user_schema import UserResponse
 
 logger = structlog.get_logger()
 

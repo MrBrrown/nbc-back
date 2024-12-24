@@ -21,6 +21,7 @@ class APPConfig(BaseModel):
     app_version: str
     app_name: str
     app_mount: str
+    environment: str
 
 class FileStorageConfig(BaseModel):
     root_dir: str
@@ -35,6 +36,8 @@ dyna_settings = Dynaconf(
 )
 
 settings = Settings(app=dyna_settings["app_settings"], db=dyna_settings["db_settings"], fileStorage=dyna_settings["file_storage_settings"])
+#переопределить значение settings.toml, если переменная окружения DB_HOST определена
+settings.db.db_host = os.environ.get("DB_HOST") or settings.db.db_host
 
 def get_project_root() -> Path:
     return Path(__file__).resolve().parent.parent.parent

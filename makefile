@@ -12,21 +12,27 @@ migration:
 	@echo "running migrations..."
 	alembic revision --autogenerate -m "initial migration"
 
+#poetry run python app/main.py
 start:
 	@echo "starting app..."
-	poetry run python app/main.py
+	poetry run cli.py api
+
 
 build:
-	docker-compose build
+	docker-compose -f "docker/docker-compose.yml" build
 
 up:
-	docker-compose up -d
+	docker-compose -f "docker/docker-compose.yml" up -d
+
+up-db:
+	@echo "Starting PostgreSQL in Docker..."
+	docker-compose -f "docker/docker-compose.yml" up -d db
 
 down:
-	docker-compose down
+	docker-compose -f "docker/docker-compose.yml" down
 
 test:
-	docker-compose run api pytest
+	docker-compose -f "docker/docker-compose.yml" run api pytest
 
 deploy:
 	# Команды для деплоя
@@ -39,4 +45,10 @@ install:
 	@echo "Setting up the application..."
 	docker-compose -f "docker/docker-compose.yml" up --build -d
 
-setup: install start
+cli-api:
+	@echo "Starting PostgreSQL in Docker..."
+	docker-compose -f "docker/docker-compose.yml" up -d db
+	@echo "Starting FastAPI locally..."
+	poetry run python cli.py api
+
+setup: install

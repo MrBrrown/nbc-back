@@ -1,7 +1,7 @@
 FROM python:3.13-slim
 
 # Устанавливаем рабочую директорию
-WORKDIR /app
+WORKDIR /
 
 # Устанавливаем зависимости для Poetry
 RUN apt-get update && apt-get install -y curl && \
@@ -23,4 +23,4 @@ COPY . .
 EXPOSE 8000
 
 # Команда для запуска приложения с использованием Poetry
-CMD ["poetry", "run", "python", "cli.py", "api"]
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

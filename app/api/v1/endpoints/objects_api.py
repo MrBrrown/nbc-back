@@ -9,21 +9,18 @@ from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from starlette.requests import Request
 from starlette.responses import FileResponse, Response, JSONResponse
 
-from core.config import settings
-from repositories.bucket_repository import BucketRepository, get_bucket_repository
-from repositories.object_repository import get_object_repository, ObjectRepository
-from schemas.object_schema import ObjectResponse
-from schemas.user_schema import UserResponse
-from services.auth_service import get_current_user
-
-
+from ....core.config import settings
+from ....repositories.bucket_repository import BucketRepository, get_bucket_repository
+from ....repositories.object_repository import get_object_repository, ObjectRepository
+from ....schemas.object_schema import ObjectResponse
+from ....schemas.user_schema import UserResponse
+from ....services.auth_service import get_current_user
 
 object_router = APIRouter()
 
 logger = structlog.get_logger()
 
 root_dir = settings.fileStorage.root_dir
-
 
 def create_dirs(path):
     dir_path = pathlib.Path(path).expanduser().parent

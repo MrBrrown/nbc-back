@@ -1,8 +1,11 @@
+import time
 from enum import Enum
 from typing import Annotated
-import time
+
+import uvicorn
 from typer import Typer, Argument
-from app.main import run_api_app
+
+from app.core.config import settings
 
 cli = Typer(help="NeoBitCloud CLI")
 
@@ -18,7 +21,12 @@ def run(
     match app:
         case Apps.api:
             print("Running API app")
-            run_api_app()
+            uvicorn.run(
+                "app.main:app",
+                host=settings.app.app_host,
+                port=settings.app.app_port,
+                reload=False
+            )
 
         case Apps.background_tasks:
             print("Running background tasks")
