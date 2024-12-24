@@ -129,7 +129,8 @@ class TestObjectRepository(unittest.IsolatedAsyncioTestCase):
             bucket_name="testbucket",
             owner_name="testuser",
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
+            download_url="\\"
         )
 
         new_object = await self.object_repo.create_object(
