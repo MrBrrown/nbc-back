@@ -1,6 +1,6 @@
 from time import time
 
-import structlog
+from loguru import logger
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
@@ -9,7 +9,6 @@ from starlette.types import ASGIApp
 
 from ..core.metrics import record_request_metrics
 
-logger = structlog.get_logger()
 
 class MetricsMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp) -> None:

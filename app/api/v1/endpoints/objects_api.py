@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from typing import List
 
-import structlog
+from loguru import logger
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from starlette.requests import Request
 from starlette.responses import FileResponse, Response, JSONResponse
@@ -17,8 +17,6 @@ from ....schemas.user_schema import UserResponse
 from ....services.auth_service import get_current_user
 
 object_router = APIRouter()
-
-logger = structlog.get_logger()
 
 root_dir = settings.fileStorage.root_dir
 

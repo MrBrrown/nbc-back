@@ -2,12 +2,13 @@ from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
+from loguru import logger
 
 from ..core.config import settings
 from ..db import get_db
 from ..exceptions.sql_error import SqlError
 from ..models.object import Object
-from ..repositories.bucket_repository import logger, BucketRepository, get_bucket_repository
+from ..repositories.bucket_repository import BucketRepository, get_bucket_repository
 from ..repositories.user_repository import UserRepository, get_user_repository
 from ..schemas.object_schema import ObjectResponse
 
