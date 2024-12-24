@@ -26,16 +26,25 @@ class APPConfig(BaseModel):
 class FileStorageConfig(BaseModel):
     root_dir: str
 
+class PresignedUrlConfig(BaseModel):
+    access_key: str
+    secret_key: str
+    expiration_minutes: int
+
 class Settings(BaseModel):
     app: APPConfig
     db: DBConfig
     fileStorage: FileStorageConfig
+    presigned_url: PresignedUrlConfig
 
 dyna_settings = Dynaconf(
     settings_files=["settings.toml"],
 )
 
-settings = Settings(app=dyna_settings["app_settings"], db=dyna_settings["db_settings"], fileStorage=dyna_settings["file_storage_settings"])
+settings = Settings(app=dyna_settings["app_settings"],
+                    db=dyna_settings["db_settings"],
+                    fileStorage=dyna_settings["file_storage_settings"],
+                    presigned_url=dyna_settings["presigned_url_settings"])
 #переопределить значение settings.toml, если переменная окружения DB_HOST определена
 settings.db.db_host = os.environ.get("DB_HOST") or settings.db.db_host
 

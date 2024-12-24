@@ -8,6 +8,7 @@ app_mount = "/api/v1"
 environment = "dev"
 
 
+
 [db_settings]
 db_name = "storage_db"
 db_user ="postgres"
@@ -17,3 +18,9 @@ db_port = 5432
 
 [file_storage_settings]
 root_dir = "~"
+
+
+[presigned_url_settings]
+access_key = "AKIAIOSFODNN7EXAMPLE"
+secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+expiration_minutes = 15
