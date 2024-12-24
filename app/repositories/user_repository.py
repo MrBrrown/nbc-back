@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -34,7 +35,7 @@ class UserRepository:
             logger.error(f"Error creating user: {e}")
             raise SqlError(f"Error creating user: {e}")
 
-    async def get_user(self, username: str) -> UserResponse or None:
+    async def get_user(self, username: str) -> Optional[UserResponse]:
         try:
             result = await self.session.execute(select(User).filter(User.username == username))
             user = result.scalar_one_or_none()

@@ -29,13 +29,13 @@ def configure_logger(
         # Добавляем JSON-форматирование
         logger.add(
             sys.stdout,
-            format="{\"time\": \"{time:YYYY-MM-DD HH:mm:ss}\", \"level\": \"{level}\", \"message\": \"{message}\"}",
+            format="{time} - {level} - {message}",
             level=level,
             serialize=True,
         )
         logger.add(
             log_file,
-            format="{\"time\": \"{time:YYYY-MM-DD HH:mm:ss}\", \"level\": \"{level}\", \"message\": \"{message}\"}",
+            format="{time} - {level} - {message}",
             level=level,
             rotation="10 MB",
             serialize=True,
@@ -44,14 +44,14 @@ def configure_logger(
         # Добавляем стандартное форматирование для консоли
         logger.add(
             sys.stdout,
-            format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+            format="{time} - {level} - {message}",
             level=level,
             colorize=True,
         )
         # Добавляем файл логов с ротацией
         logger.add(
             log_file,
-            format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}",
+            format="{time} - {level} - {message}",
             level=level,
             rotation="10 MB",
             retention="10 days",

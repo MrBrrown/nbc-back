@@ -1,10 +1,10 @@
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from loguru import logger
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -90,7 +90,7 @@ class BucketRepository:
             logger.error(f"Error getting all buckets: {e}")
             raise SqlError(f"Error getting all buckets: {e}")
 
-    async def read_bucket(self, bucket_name: str) -> BucketResponse or None:
+    async def read_bucket(self, bucket_name: str) -> Optional[BucketResponse]:
         try:
             bucket_to_read = await self.session.execute(
                 select(Bucket).where(Bucket.bucket_name == bucket_name)
