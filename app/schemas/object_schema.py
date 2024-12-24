@@ -34,3 +34,8 @@ class ObjectResponse(ObjectBase, ObjectStorage, ObjectMetadata):
     """Model for S3 object response."""
     # При желании можно указать порядок полей в ответе
     model_config = ConfigDict(from_attributes=True, populate_by_name=True, json_schema_extra={"description": "S3 Object Response Model"})
+
+class ObjectLink(BaseModel):
+    object_key: str
+    bucket_name: str
+    download_url: HttpUrl = Field(..., description="Download URL for the object")

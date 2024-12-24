@@ -20,10 +20,11 @@ class ObjectRepository:
         self.user_repo = user_repo
         self.bucket_repo = bucket_repo
 
-    async def get_all_objects(self, bucket_name: str, username: str):
+    async def get_all_objects(self, bucket_name: str | None, username: str) -> list[ObjectResponse]:
         try:
+
             objects = await self.session.execute(
-                select(Object).where(Object.bucket_name == bucket_name, Object.owner_name == username)
+                select(Object).where((bucket_name is None) or (Object.bucket_name == bucket_name), Object.owner_name == username)
             )
             objects = objects.scalars().all()
 
