@@ -140,3 +140,5 @@ async def get_object_repository(session: AsyncSession = Depends(get_db),
                                 user_repo: UserRepository = Depends(get_user_repository),
                                 bucket_repo: BucketRepository = Depends(get_bucket_repository)) -> ObjectRepository:
     return ObjectRepository(session=session, user_repo=user_repo, bucket_repo=bucket_repo)
+
+
