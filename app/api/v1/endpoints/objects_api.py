@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import List
 from urllib.parse import urlencode, urljoin, parse_qs, urlparse
 
-import structlog
+from loguru import logger
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from starlette.requests import Request
 from starlette.responses import FileResponse, Response, JSONResponse
@@ -60,8 +60,6 @@ def generate_presigned_url(base_url, access_key, secret_key, method, bucket_name
 
 
 object_router = APIRouter()
-
-logger = structlog.get_logger()
 
 root_dir = settings.fileStorage.root_dir
 
