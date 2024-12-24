@@ -33,13 +33,14 @@ services:
   grafana:
     image: grafana/grafana
     ports:
-      - "3000:3000"
+      - "3001:3001"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SERVER_HTTP_PORT=3001
     volumes:
       - ../grafana/grafana_data:/var/lib/grafana
       - ../grafana/provisioning:/etc/grafana/provisioning
-    depends_on:
-      - prometheus
-
 
 volumes:
   db_data:

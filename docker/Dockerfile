@@ -24,3 +24,9 @@ EXPOSE 8000
 
 # Команда для запуска приложения с использованием Poetry
 CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+FROM grafana/grafana
+
+EXPOSE 3001
+
+ADD grafana.ini /etc/grafana
