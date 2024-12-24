@@ -5,6 +5,7 @@ class ObjectBase(BaseModel):
     """Base model for S3 objects."""
     object_key: str
     owner_id: int
+    owner_name: str
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class ObjectStorage(BaseModel):
@@ -21,6 +22,7 @@ class ObjectMetadata(BaseModel):
     id: int
     created_at: datetime
     updated_at: datetime
+    file_storage_path: str
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 class ObjectCreate(ObjectBase):

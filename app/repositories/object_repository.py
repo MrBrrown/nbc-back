@@ -25,10 +25,19 @@ class ObjectRepository:
                 select(Object).where(Object.bucket_name == bucket_name, Object.owner_name == username)
             )
             objects = objects.scalars().all()
-            object_schemas = [ObjectResponse.model_validate(obj) for obj in objects]
+
+            # Log each object's attributes
+            for obj in objects:
+                logger.debug(f"Object data: {vars(obj)}")
+
+            try:
+                object_schemas = [ObjectResponse.model_validate(obj) for obj in objects]
+            except Exception as e:
+                logger.error(f"Validation error: {e}")
+                raise
+
             logger.info(f"Objects in bucket '{bucket_name}' found successfully.")
             return object_schemas
-
 
         except Exception as e:
             await self.session.rollback()

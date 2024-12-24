@@ -51,7 +51,7 @@ def generate_presigned_url(base_url, access_key, secret_key, method, bucket_name
     }
     signature = generate_signature(secret_key, method, base_url, expires)
 
-    params['Signature'] = signature
+    params['signature'] = signature
 
     presigned_url = f"{base_url}?{urlencode(params)}"
 
@@ -99,10 +99,14 @@ async def download_object_presigned(bucket_name: str, object_key: str, request: 
     path = f"/{bucket_name}/{object_key}"
     string_to_sign = f"{signature_method}\n{path}\n{expires}\n"
 
-    calculated_signature = hmac.new(
-        secret_key.encode("utf-8"), string_to_sign.encode("utf-8"), hashlib.sha256
-    ).digest()
-    calculated_signature_b64 = base64.b64encode(calculated_signature).decode("utf-8")
+
+    host = str(request.base_url)
+    url_ = urljoin(host, f"api/v1/presigned/{bucket_name}/{object_key}")
+    calculated_signature_b64 = generate_signature(secret_key, "GET", url_, expires)
+    # calculated_signature = hmac.new(
+    #     secret_key.encode("utf-8"), string_to_sign.encode("utf-8"), hashlib.sha256
+    # ).digest()
+    # calculated_signature_b64 = base64.b64encode(calculated_signature).decode("utf-8")
 
     if calculated_signature_b64 != signature:
         raise HTTPException(status_code=403, detail="Invalid signature")
