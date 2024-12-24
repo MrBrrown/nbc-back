@@ -254,14 +254,18 @@ async def delete_object(bucket_name: str, object_key: str,
     path_file_to_delete = pathlib.Path(os.path.join(root_dir, bucket_name, object_key)).expanduser()
 
     try:
-        object_record = await object_repo.get_object(bucket_name, object_key, current_user.username)
+        object_record = await object_repo.read_object(bucket_name, object_key, current_user.username)
         if not object_record:
             raise HTTPException(status_code=404, detail=f"Object '{object_key}' in bucket '{bucket_name}' not found in database.")
 
+        deleted = await object_repo.delete_object(bucket_name, object_key, current_user.username)
+        if not deleted:
+            raise HTTPException(status_code=500, detail=f"Failed to delete object '{object_key}' in bucket '{bucket_name}' from database.")
+
+        logger.info(f"Object '{object_key}' in bucket '{bucket_name}' deleted from database.")
+
         if os.path.exists(path_file_to_delete) and os.path.isfile(path_file_to_delete):
             os.remove(path_file_to_delete)
-
-        await object_repo.delete_object(bucket_name, object_key, current_user.username)
 
         return {"detail": f"Object '{object_key}' in bucket '{bucket_name}' deleted successfully."}
 

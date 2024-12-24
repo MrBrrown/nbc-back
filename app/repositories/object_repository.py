@@ -73,17 +73,18 @@ class ObjectRepository:
             logger.error(f"Error creating object: {e}")
             raise SqlError(f"Error creating object: {e}")
 
-    async def read_object(self, bucket_name: str, object_key: str):
+    async def read_object(self, bucket_name: str, object_key: str, username: str):
         try:
+
             object_to_read = await self.session.execute(
-                select(Object).where(Object.bucket == bucket_name, Object.object_key == object_key)
+                select(Object).where(Object.bucket_name == bucket_name, Object.object_key == object_key, Object.owner_name == username)
             )
             object = object_to_read.scalar_one_or_none()
 
             if object:
                 return object
             else:
-                logger.warn(f"Object '{object_key}' in bucket '{bucket_name}' not found.")
+                logger.warning(f"Object '{object_key}' in bucket '{bucket_name}' not found.")
                 return None
         except Exception as e:
             await self.session.rollback()
@@ -93,7 +94,7 @@ class ObjectRepository:
     async def update_object(self, bucket_name: str, object_key: str, content: str):
         try:
             object_to_update = await self.session.execute(
-                select(Object).where(Object.bucket == bucket_name, Object.object_key == object_key)
+                select(Object).where(Object.bucket_name == bucket_name, Object.object_key == object_key)
             )
             object = object_to_update.scalar_one_or_none()
 
@@ -103,7 +104,7 @@ class ObjectRepository:
                 await self.session.commit()
                 logger.info(f"Object '{object_key}' in bucket '{bucket_name}' updated successfully.")
             else:
-                logger.warn(f"Object '{object_key}' in bucket '{bucket_name}' not found.")
+                logger.warning(f"Object '{object_key}' in bucket '{bucket_name}' not found.")
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Error updating object: {e}")
@@ -125,8 +126,10 @@ class ObjectRepository:
                 await self.session.delete(object_record)
                 await self.session.commit()
                 logger.info(f"Object '{object_key}' in bucket '{bucket_name}' deleted from database.")
+                return True
             else:
                 logger.warning(f"Object '{object_key}' not found in database.")
+                return False
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Error deleting object: {e}")
