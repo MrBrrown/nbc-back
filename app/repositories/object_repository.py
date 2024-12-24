@@ -99,23 +99,28 @@ class ObjectRepository:
             raise SqlError(f"Error updating object: {e}")
 
 
-    async def delete_object(self, bucket_name: str, object_key: str):
+    async def delete_object(self, bucket_name: str, object_key: str, owner_username: str):
         try:
-            object_to_delete = await self.session.execute(
-                select(Object).where(Object.bucket == bucket_name, Object.object_key == object_key)
+            object_record = await self.session.execute(
+                select(Object).where(
+                    Object.bucket_name == bucket_name,
+                    Object.object_key == object_key,
+                    Object.owner_name == owner_username
+                )
             )
-            object = object_to_delete.scalar_one_or_none()
+            object_record = object_record.scalar_one_or_none()
 
-            if object:
-                await self.session.delete(object)
+            if object_record:
+                await self.session.delete(object_record)
                 await self.session.commit()
-                logger.info(f"Object '{object_key}' in bucket '{bucket_name}' deleted successfully.")
+                logger.info(f"Object '{object_key}' in bucket '{bucket_name}' deleted from database.")
             else:
-                logger.warn(f"Object '{object_key}' in bucket '{bucket_name}' not found.")
+                logger.warning(f"Object '{object_key}' not found in database.")
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Error deleting object: {e}")
             raise SqlError(f"Error deleting object: {e}")
+
 
 async def get_object_repository(session: AsyncSession = Depends(get_db),
                                 user_repo: UserRepository = Depends(get_user_repository),

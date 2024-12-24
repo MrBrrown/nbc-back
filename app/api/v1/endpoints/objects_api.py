@@ -141,19 +141,27 @@ async def get_obj_metadata(bucket_name: str, object_key: str) -> dict:
     return metadata
 
 @object_router.delete("/{bucket_name}/{object_key}")
-async def delete_object (bucket_name: str, object_key: str,
-                         current_user: UserResponse = Depends(get_current_user)):
-    # Проверка на запрещённые символы в пути
+async def delete_object(bucket_name: str, object_key: str,
+                        current_user: UserResponse = Depends(get_current_user),
+                        object_repo: ObjectRepository = Depends(get_object_repository)):
+    
     if re.search(r'[<>:"/\\|?*]', bucket_name) or re.search(r'[<>:"/\\|?*]', object_key):
         raise HTTPException(status_code=400, detail="Invalid characters in bucket name or object key")
 
-    path_file_to_delete = pathlib.Path(os.path.join(root_dir,bucket_name, object_key)).expanduser()
+    path_file_to_delete = pathlib.Path(os.path.join(root_dir, bucket_name, object_key)).expanduser()
 
     try:
+        object_record = await object_repo.get_object(bucket_name, object_key, current_user.username)
+        if not object_record:
+            raise HTTPException(status_code=404, detail=f"Object '{object_key}' in bucket '{bucket_name}' not found in database.")
+
         if os.path.exists(path_file_to_delete) and os.path.isfile(path_file_to_delete):
             os.remove(path_file_to_delete)
-            return {"detail": f"Object '{object_key}' in bucket '{bucket_name}' deleted successfully."}
-        else:
-            raise HTTPException(status_code=404, detail=f"Object '{object_key}' in bucket '{bucket_name}' not found.")
+
+        await object_repo.delete_object(bucket_name, object_key, current_user.username)
+
+        return {"detail": f"Object '{object_key}' in bucket '{bucket_name}' deleted successfully."}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred while deleting the object: {e}")
+

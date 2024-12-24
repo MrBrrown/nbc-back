@@ -25,7 +25,16 @@ class BucketRepository:
 
     async def create_bucket(self, bucket_name: str, owner_name: str) -> BucketResponse:
         try:
-            user= await self.user_repo.get_user(owner_name)
+            existing_bucket = await self.session.execute(
+                select(Bucket).where(Bucket.bucket_name == bucket_name)
+            )
+            existing_bucket = existing_bucket.scalar_one_or_none()
+
+            if existing_bucket:
+                raise HTTPException(status_code=400, detail=f"Bucket with name '{bucket_name}' already exists")
+
+            user = await self.user_repo.get_user(owner_name)
+
             new_bucket = Bucket(
                 bucket_name=bucket_name,
                 owner_id=user.id,
@@ -37,6 +46,7 @@ class BucketRepository:
             await self.session.flush()
             bucket_schema = BucketResponse.model_validate(new_bucket)
             await self.session.commit()
+
             logger.info(f"Bucket '{bucket_name}' created successfully.")
             return bucket_schema
         except Exception as e:
@@ -44,24 +54,30 @@ class BucketRepository:
             logger.error(f"Error creating bucket: {e}")
             raise SqlError(f"Error creating bucket: {e}")
 
-    async def delete_bucket(self,
-                            bucket_name: str,
-                            owner_username: str) -> bool:
+
+    async def delete_bucket(self, bucket_name: str, owner_username: str) -> bool:
         try:
-            bucket = await self.read_bucket(bucket_name)
-            if bucket and bucket.owner_name == owner_username:
+            bucket = await self.session.execute(
+                select(Bucket).where(
+                    Bucket.bucket_name == bucket_name,
+                    Bucket.owner_name == owner_username
+                )
+            )
+            bucket = bucket.scalar_one_or_none()
+
+            if bucket:
                 await self.session.delete(bucket)
                 await self.session.commit()
-                logger.info(f"Bucket '{bucket_name}' deleted successfully.")
+                logger.info(f"Bucket '{bucket_name}' deleted successfully by '{owner_username}'.")
                 return True
-            elif bucket:
-                logger.warning(f"Attempt to delete bucket '{bucket_name}' by non-owner '{owner_username}'")
+            else:
+                logger.warning(f"Bucket '{bucket_name}' not found or access denied for '{owner_username}'.")
                 return False
-            return False
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Error deleting bucket: {e}")
             raise SqlError(f"Error deleting bucket: {e}")
+
 
     async def get_all_buckets(self):
         try:
