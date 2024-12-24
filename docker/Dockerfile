@@ -1,7 +1,7 @@
 FROM python:3.13-slim
 
 # Устанавливаем рабочую директорию
-WORKDIR /
+WORKDIR /app
 
 # Устанавливаем зависимости для Poetry
 RUN apt-get update && apt-get install -y curl && \
@@ -14,7 +14,7 @@ COPY pyproject.toml poetry.lock ./
 
 # Устанавливаем зависимости с помощью Poetry
 RUN poetry env use python3.13
-RUN poetry install
+RUN poetry install --no-root  # Используйте --no-root, если не нужно устанавливать сам пакет
 
 # Копируем все исходные файлы приложения в контейнер
 COPY . .
@@ -24,9 +24,3 @@ EXPOSE 8000
 
 # Команда для запуска приложения с использованием Poetry
 CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-
-FROM grafana/grafana
-
-EXPOSE 3001
-
-ADD grafana.ini /etc/grafana

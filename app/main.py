@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 async def configure_app() -> None:
     print("Configuring logger...")
-    configure_logger()
+    configure_logger(enable_json_logs=True, enable_sql_logs=False, level="INFO")
     print("Logger configured")
 
     print("Configuring database...")
@@ -47,7 +47,9 @@ app = FastAPI(
 
 # CORS configuration
 origins = [
-    "http://localhost:3001"
+    "http://localhost:3001",
+    "http://localhost:3000",
+    "http://localhost:8000",
 ]
 
 app.add_middleware(
