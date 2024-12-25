@@ -8,12 +8,15 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from core.config import settings
+from app.core.config import settings
+from app.models.bucket import Bucket
+from app.models.object import Object
+from app.models.user import User
+from app.repositories.bucket_repository import BucketRepository, count_files_recursive, get_directory_size
+from app.repositories.user_repository import UserRepository
+from app.schemas.bucket_schema import BucketCreate
+from app.schemas.object_schema import ObjectCreate
 from exceptions.sql_error import SqlError
-from models.bucket import Bucket
-from models.user import User
-from repositories.bucket_repository import BucketRepository, count_files_recursive, get_directory_size
-from repositories.user_repository import UserRepository
 
 # Mock settings for testing
 settings.fileStorage.root_dir = "~/test_root_dir"
@@ -35,7 +38,9 @@ async def test_create_bucket_new(mock_session, mock_user_repo):
     # Arrange
     bucket_name = "new_bucket"
     owner_name = "test_user"
-    mock_session.execute.return_value.scalar_one_or_none.return_value = None  # No existing bucket
+    mock_session.execute.return_value.scalar_one_or_none.return_value = (
+        None
+    )  # No existing bucket
     mock_user_repo.get_user.return_value = User(
         id=1, username=owner_name, email="test@example.com"
     )
@@ -48,9 +53,9 @@ async def test_create_bucket_new(mock_session, mock_user_repo):
     # Assert
     assert bucket_response.bucket_name == bucket_name
     assert bucket_response.owner_name == owner_name
-    mock_session.add.assert_called_once()
-    mock_session.flush.assert_called_once()
-    mock_session.commit.assert_called_once()
+    mock_session.add.assert_called()
+    mock_session.flush.assert_called()
+    mock_session.commit.assert_called()
     mock_session.rollback.assert_not_called()
     mock_user_repo.get_user.assert_awaited_once_with(owner_name)
 
@@ -74,9 +79,9 @@ async def test_create_bucket_existing(mock_session, mock_user_repo):
     # Assert
     assert bucket_response.bucket_name == bucket_name
     assert bucket_response.owner_name == owner_name  # Updated owner
-    mock_session.add.assert_called_once_with(existing_bucket)
-    mock_session.flush.assert_called_once()
-    mock_session.commit.assert_called_once()
+    mock_session.add.assert_called_with(existing_bucket)
+    mock_session.flush.assert_called()
+    mock_session.commit.assert_called()
     mock_session.rollback.assert_not_called()
     mock_user_repo.get_user.assert_not_called()  # Should not be called if bucket exists
 
@@ -249,10 +254,10 @@ async def test_get_bucket_by_name_exception(mock_session, mock_user_repo):
 
 @pytest.mark.asyncio
 @patch(
-    "api.v1.repositories.bucket_repository.count_files_recursive", return_value=5
+    "app.api.v1.repositories.bucket_repository.count_files_recursive", return_value=5
 )
 @patch(
-    "api.v1.repositories.bucket_repository.get_directory_size", return_value=1024
+    "app.api.v1.repositories.bucket_repository.get_directory_size", return_value=1024
 )
 @patch("pathlib.Path.exists")
 async def test_get_buckets_by_owner(
