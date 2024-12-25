@@ -102,52 +102,7 @@ class TestObjectRepository(unittest.IsolatedAsyncioTestCase):
         mock_read_object.assert_called_once_with(bucket_name="testbucket", object_key="testkey", username="testuser")
 
 
-    @patch('app.repositories.object_repository.ObjectRepository.get_all_objects', new_callable=AsyncMock)
-    async def test_get_all_objects2(self, mock_get_all_objects):
-        mock_get_all_objects.return_value = [
-            ObjectResponse(
-                id=1,
-                object_key="testobject",
-                bucket_name="testbucket",
-                owner_name="testuser",
-                created_at=datetime.now(),
-                updated_at=datetime.now()
-            )
-        ]
 
-        objects = await self.object_repo.get_all_objects(bucket_name="testbucket", username="testuser")
-
-        self.assertEqual(len(objects), 1)
-        self.assertEqual(objects[0].object_key, "testobject")
-        mock_get_all_objects.assert_called_once_with(bucket_name="testbucket", username="testuser")
-
-    @patch('app.repositories.object_repository.ObjectRepository.create_object', new_callable=AsyncMock)
-    async def test_create_object2(self, mock_create_object):
-        mock_create_object.return_value = Object(
-            id=1,
-            object_key="testobject",
-            bucket_name="testbucket",
-            owner_name="testuser",
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-            download_url="\\"
-        )
-
-        new_object = await self.object_repo.create_object(
-            bucket_name="testbucket",
-            object_key="testobject",
-            owner_name="testuser",
-            extension_without_dot="txt"
-        )
-
-        self.assertEqual(new_object.object_key, "testobject")
-        self.assertEqual(new_object.bucket_name, "testbucket")
-        mock_create_object.assert_called_once_with(
-            bucket_name="testbucket",
-            object_key="testobject",
-            owner_name="testuser",
-            extension_without_dot="txt"
-        )
 
     @patch('app.repositories.object_repository.ObjectRepository.get_object', new_callable=AsyncMock)
     async def test_get_object(self, mock_get_object):
@@ -190,14 +145,7 @@ class TestObjectRepository(unittest.IsolatedAsyncioTestCase):
             new_key="updatedobject"
         )
 
-    @patch('app.repositories.object_repository.ObjectRepository.delete_object', new_callable=AsyncMock)
-    async def test_delete_object2(self, mock_delete_object):
-        mock_delete_object.return_value = True
 
-        result = await self.object_repo.delete_object(bucket_name="testbucket", object_key="testobject")
-
-        self.assertTrue(result)
-        mock_delete_object.assert_called_once_with(bucket_name="testbucket", object_key="testobject")
 
     @patch('app.repositories.object_repository.ObjectRepository.get_object_repository', new_callable=AsyncMock)
     async def test_get_object_repository(self, mock_get_object_repository):
